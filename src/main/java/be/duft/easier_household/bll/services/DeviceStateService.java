@@ -1,0 +1,13 @@
+package be.duft.easier_household.bll.services;
+
+import be.duft.easier_household.dal.repositories.DeviceRepository;
+import be.duft.easier_household.dal.repositories.DeviceStateRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class DeviceStateService {
+    private final DeviceStateRepository deviceStateRepository;
+}
+

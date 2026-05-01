@@ -33,7 +33,7 @@ public class AutomationTrigger {
 
     @Getter @Setter
     @Column(nullable = true) // Uniquement utilisé si le trigger_type est TIME
-    private LocalDateTime time_value;
+    private LocalDateTime timeValue;
 
     @Getter @Setter
     @Column(nullable = true)

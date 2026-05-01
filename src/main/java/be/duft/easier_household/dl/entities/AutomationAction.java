@@ -31,7 +31,7 @@ public class AutomationAction {
 
     @Getter @Setter
     @Enumerated(EnumType.STRING)
-    private DeviceStatus target_status;
+    private DeviceStatus targetStatus;
 
     @Getter @Setter
     @Column(nullable = true)

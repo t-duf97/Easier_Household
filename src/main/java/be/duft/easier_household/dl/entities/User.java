@@ -17,7 +17,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Getter
-    private Integer id;
+    private Long id;
 
     @Getter @Setter
     @Column(nullable = false, name="username")
@@ -34,14 +34,14 @@ public class User {
 
     @Getter @Setter
     @Column(nullable = false)
-    LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Getter @Setter
-    @Column
-    LocalDateTime updated_at;
+    @Column(nullable = true)
+    private LocalDateTime updatedAt;
 
     @Getter @Setter
     @Column()
-    private Set<HouseHoldMember> memberships = new HashSet<>();
+    private Set<HouseholdMember> memberships = new HashSet<>();
 
 }

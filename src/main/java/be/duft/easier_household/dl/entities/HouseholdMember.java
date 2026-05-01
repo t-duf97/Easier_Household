@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-public class HouseHoldMember {
+public class HouseholdMember {
 
     @EmbeddedId
     @Getter

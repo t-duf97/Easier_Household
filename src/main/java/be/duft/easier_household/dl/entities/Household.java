@@ -3,7 +3,6 @@ package be.duft.easier_household.dl.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashSet;
@@ -25,7 +24,7 @@ public class Household {
 
     @Getter @Setter
     @Column(nullable = false)
-    private ZoneId timezone;
+    private ZoneId timeZone;
 
 
     @ManyToOne
@@ -39,7 +38,7 @@ public class Household {
 
     @Column
     @Getter @Setter
-    private Set<HouseHoldMember> members = new HashSet<>();
+    private Set<HouseholdMember> members = new HashSet<>();
 
 
 

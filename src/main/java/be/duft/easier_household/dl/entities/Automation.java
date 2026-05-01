@@ -54,7 +54,7 @@ public class Automation {
     private LocalDateTime updatedAt;
 
     @Getter @Setter
-    private LocalDateTime last_triggered_at;
+    private LocalDateTime lastTriggeredAt;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

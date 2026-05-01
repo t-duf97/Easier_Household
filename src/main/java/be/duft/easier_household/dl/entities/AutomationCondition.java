@@ -45,11 +45,11 @@ public class AutomationCondition {
 
     @Getter @Setter
     @Column(nullable = true)
-    private LocalTime time_from;
+    private LocalTime timeFrom;
 
     @Getter @Setter
     @Column(nullable = true)
-    private LocalTime time_to;
+    private LocalTime timeTo;
 
 
     @Getter @Setter

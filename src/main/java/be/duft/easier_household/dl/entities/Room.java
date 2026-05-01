@@ -26,7 +26,7 @@ public class Room {
 
     @Getter @Setter
     @Column(nullable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Column(name = "household_id", insertable = false, updatable = false)
     @Getter

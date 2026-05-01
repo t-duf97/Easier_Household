@@ -29,23 +29,23 @@ public class DeviceIntegration {
 
     @Getter @Setter
     @Column(nullable = false)
-    private Long external_device_id;
+    private Long externalDeviceId;
 
     // Je ne sais pas encore comment le récupérer. ça risque de devenir un String/varchar
 
     @Getter @Setter
     @Column(nullable = false)
-    private String credentials_ref;
+    private String credentialsRef;
     // Pareil. ici c'est plutot les login/token pour utiliser l'api mais aucune idée de comment procéder.
 
     @Getter @Setter
     @Column(nullable = true)
-    private String extra_config;
+    private String extraConfig;
 
     //Configuration nécessaire supplémentaire selon l'appareil. A voir selon l'intégration
 
     @Getter @Setter
     @Column(nullable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
 }

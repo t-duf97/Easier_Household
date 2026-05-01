@@ -27,7 +27,7 @@ public class Device {
 
     @Getter @Setter
     @Column(name="room_id", insertable = false, updatable = false)
-    private Long room_id;
+    private Long roomId;
 
     @ManyToOne
     @JoinColumn(name = "assigned_room_id")

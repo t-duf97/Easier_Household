@@ -11,12 +11,7 @@ import java.util.Set;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode@ToString
-public class Household {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class Household extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = false)
@@ -31,10 +26,6 @@ public class Household {
     @JoinColumn(name = "created_by_id")
     @Getter @Setter
     private User createdBy;
-
-    @Getter @Setter
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
 
     @Column
     @Getter @Setter

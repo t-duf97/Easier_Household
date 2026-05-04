@@ -11,12 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class Automation {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class Automation extends BaseEntity {
 
     @Getter
     @Column(name="household_id")

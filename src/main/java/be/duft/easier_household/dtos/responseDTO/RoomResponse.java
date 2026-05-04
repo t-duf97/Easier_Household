@@ -1,5 +1,6 @@
 package be.duft.easier_household.dtos.responseDTO;
 
+import be.duft.easier_household.dl.enums.RoomType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,5 +14,6 @@ public class RoomResponse {
     private int floor;
     private LocalDateTime created_at;
     private Long householdId;
+    private RoomType roomType;
 
 }

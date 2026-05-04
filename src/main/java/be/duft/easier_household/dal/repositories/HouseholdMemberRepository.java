@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember, HouseholdMemberId> {
+public interface HouseholdMemberRepository extends BaseRepository<HouseholdMember, HouseholdMemberId> {
 }

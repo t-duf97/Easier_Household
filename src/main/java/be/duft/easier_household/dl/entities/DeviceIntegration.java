@@ -8,12 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 @EqualsAndHashCode @ToString
 @NoArgsConstructor
-public class DeviceIntegration {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class DeviceIntegration extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = false)
@@ -43,9 +38,5 @@ public class DeviceIntegration {
     private String extraConfig;
 
     //Configuration nécessaire supplémentaire selon l'appareil. A voir selon l'intégration
-
-    @Getter @Setter
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
 
 }

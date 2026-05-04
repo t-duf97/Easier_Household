@@ -13,12 +13,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class AutomationCondition {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class AutomationCondition extends BaseEntity {
 
     @Getter
     @Column(name = "automation_id")

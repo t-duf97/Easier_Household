@@ -9,12 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class DeviceState {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class DeviceState extends BaseEntity {
 
     @Column(name="device_id", nullable = false,  unique = true)
     @Getter
@@ -29,10 +24,6 @@ public class DeviceState {
     @Column(nullable = false)
     private String value;
 
-    @Getter @Setter
-    @Column(nullable = false)
-    private LocalDateTime changedAt;
-
     @Getter
     @Column(name="user_id") // M'a declenché une erreur au moment de faire la jointure?
     private Long changedBy;
@@ -40,7 +31,6 @@ public class DeviceState {
     // A voir ce que ça donne. Je ne sais pas si ma jointure est bien faite sur la table USer
     // A voir aussi si à la suppression d'un user l'historique ne part pas en cacahuète
     // yeehaw
-
 
 
     @ManyToOne(fetch = FetchType.LAZY)

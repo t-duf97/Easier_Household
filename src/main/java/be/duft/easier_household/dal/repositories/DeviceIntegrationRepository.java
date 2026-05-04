@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DeviceIntegrationRepository extends JpaRepository<DeviceIntegration, Long> {
+public interface DeviceIntegrationRepository extends BaseRepository<DeviceIntegration, Long> {
 }

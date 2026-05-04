@@ -1,6 +1,7 @@
 package be.duft.easier_household.dl.entities;
 
 
+import be.duft.easier_household.dl.enums.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,12 +10,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class Room {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class Room extends BaseEntity {
 
     @Getter @Setter
     @Column(unique = true, nullable = false)
@@ -24,14 +20,14 @@ public class Room {
     @Column(nullable = false)
     private int floor;
 
-    @Getter @Setter
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
     @Column(name = "household_id", insertable = false, updatable = false)
     @Getter
     private Long householdId;
 
+    @Getter @Setter
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RoomType roomType;
 
     @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)

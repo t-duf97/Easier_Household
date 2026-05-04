@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AutomationRepository extends JpaRepository<Automation, Long> {
+public interface AutomationRepository extends BaseRepository<Automation, Long> {
 }

@@ -14,12 +14,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class AutomationTrigger {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class AutomationTrigger extends BaseEntity {
 
     @Getter @Setter
     @Column(name="automation_id")

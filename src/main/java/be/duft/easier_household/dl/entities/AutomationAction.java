@@ -11,10 +11,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class AutomationAction {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class AutomationAction extends BaseEntity {
 
     @Getter
     @Column(nullable = false, name="automation_id")

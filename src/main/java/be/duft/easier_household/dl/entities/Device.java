@@ -9,12 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor
 @EqualsAndHashCode @ToString
-public class Device {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+public class Device extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = false)
@@ -43,12 +38,5 @@ public class Device {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private boolean isOnline;
 
-    @Getter @Setter
-    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime createdAt;
-
-    @Getter @Setter
-    @Column
-    private LocalDateTime updatedAt;
 
 }

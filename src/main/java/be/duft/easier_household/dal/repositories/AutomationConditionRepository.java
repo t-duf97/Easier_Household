@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AutomationConditionRepository extends JpaRepository<AutomationCondition, Long> {
+public interface AutomationConditionRepository extends BaseRepository<AutomationCondition, Long> {
 }

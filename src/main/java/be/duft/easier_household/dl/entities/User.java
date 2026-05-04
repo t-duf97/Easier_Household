@@ -12,12 +12,8 @@ import java.util.Set;
 @Entity
 @NoArgsConstructor
 @ToString @EqualsAndHashCode
-public class User {
+public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
 
     @Getter @Setter
     @Column(nullable = false, name="username")
@@ -31,14 +27,6 @@ public class User {
     @Getter @Setter
     @Column(nullable = false)
     private String passwordHash;
-
-    @Getter @Setter
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Getter @Setter
-    @Column(nullable = true)
-    private LocalDateTime updatedAt;
 
     @Getter @Setter
     @Column()

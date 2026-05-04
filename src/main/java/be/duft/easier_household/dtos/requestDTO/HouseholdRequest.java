@@ -1,13 +1,14 @@
 package be.duft.easier_household.dtos.requestDTO;
 
 
+import be.duft.easier_household.dl.entities.HouseholdMember;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.ZoneId;
-import java.util.List;
+import java.util.Set;
 
 @Getter @Setter
 public class HouseholdRequest {
@@ -20,6 +21,6 @@ public class HouseholdRequest {
 
     // Je dois implémenter une liste de prénoms, qui seront assignés lorsque des
     // utilisateurs rejoindront le household.
-    private List<String> members;
+    private Set<HouseholdMember> members;
 
 }

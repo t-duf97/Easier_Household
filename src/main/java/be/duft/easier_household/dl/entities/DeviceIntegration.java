@@ -6,8 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@EqualsAndHashCode @ToString
 @NoArgsConstructor
+@EqualsAndHashCode(exclude = {"device"}, callSuper = false)
+@ToString(exclude = {"device"})
 public class DeviceIntegration extends BaseEntity {
 
     @Getter @Setter
@@ -15,18 +16,17 @@ public class DeviceIntegration extends BaseEntity {
     private String provider;
 
     @Getter @Setter
-    @Column(name ="device_id", nullable = false)
+    @Column(name ="device_id", insertable = false, updatable = false, nullable = false)
     private Long deviceId;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name="device_id")
+    @Getter @Setter
     private Device device;
 
     @Getter @Setter
     @Column(nullable = false)
-    private Long externalDeviceId;
-
-    // Je ne sais pas encore comment le récupérer. ça risque de devenir un String/varchar
+    private String externalDeviceId;
 
     @Getter @Setter
     @Column(nullable = false)

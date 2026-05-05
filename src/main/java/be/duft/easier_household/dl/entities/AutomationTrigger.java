@@ -8,18 +8,19 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"automation", "device"}, callSuper = false)
+@ToString(exclude = {"automation", "device"})
 public class AutomationTrigger extends BaseEntity {
 
     @Getter @Setter
-    @Column(name="automation_id")
-    private List<Long> automationIds;
-
+    @Column(name="automation_id", updatable = false, insertable = false)
+    private Long automationId;
 
     @Getter @Setter
     @Column(nullable = false)
@@ -28,24 +29,22 @@ public class AutomationTrigger extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = true) // Uniquement utilisé si le trigger_type est TIME
-    private LocalDateTime timeValue;
+    private LocalTime timeValue;
 
     @Getter @Setter
     @Column(nullable = true)
-    private List<String> daysOfWeek;
-
+    private String daysOfWeek;
     // Questionner le fonctionnement des jours de la semaine pour l'automatisation
     // Au moment de la mise en place des automations
 
     @Getter @Setter
-    @Column(nullable = false)
+    @Column
     private DeviceStatus expectedStatus;
     // Statut expected par le trigger (soit avant le déclenchement, soit après. A paramétrer selon le trigger)
 
-
     @Getter @Setter
     @Column(nullable = true)
-    private double thresholdValue;
+    private Double thresholdValue;
     // Exemple 25.0 pour une limite de température dans un sensor/threshold
 
     @Enumerated(EnumType.STRING)
@@ -54,13 +53,19 @@ public class AutomationTrigger extends BaseEntity {
     private ThresholdOperator thresholdOperator;
     // Utile uniquement dans le cas d'une comparaison avec une valeur et d'une thresholdvalue
 
-
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id")
     @Getter
-    private List<Automation> automations = new ArrayList<>();
+    private Automation automation;
 
+    @Getter @Setter
+    @Column(name = "device_id", insertable = false, updatable = false)
+    private Long deviceId;
 
+    @Getter @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "device_id")
+    private Device device;
 
 
 }

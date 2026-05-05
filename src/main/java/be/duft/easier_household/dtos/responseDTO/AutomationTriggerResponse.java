@@ -7,15 +7,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
 @Setter
 public class AutomationTriggerResponse {
     private Long id;
+    private Long deviceId;
+    private Long automationId;
     private TriggerType triggerType;
-    private LocalDateTime time_value;
-    private List<String> daysOfWeek;
+    private LocalTime time_value;
+    private String daysOfWeek;
     private DeviceStatus expectedStatus;
     private double thresholdValue;
     private ThresholdOperator thresholdOperator;

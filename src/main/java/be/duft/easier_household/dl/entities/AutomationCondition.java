@@ -12,11 +12,12 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"automation", "device"}, callSuper = false)
+@ToString(exclude = {"automation", "device"})
 public class AutomationCondition extends BaseEntity {
 
     @Getter
-    @Column(name = "automation_id")
+    @Column(name = "automation_id", updatable = false, insertable = false)
     private Long automationId;
 
     @Enumerated(EnumType.STRING)
@@ -31,7 +32,7 @@ public class AutomationCondition extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = true)
-    private double thresholdValue;
+    private Double thresholdValue;
 
     @Enumerated(EnumType.STRING)
     @Getter @Setter
@@ -46,11 +47,10 @@ public class AutomationCondition extends BaseEntity {
     @Column(nullable = true)
     private LocalTime timeTo;
 
-
     @Getter @Setter
     @Column(nullable = true)
-    private List<String> daysOfWeek;
-    // Je ne sais pas encore comment je vais procéder pour les jours.
+    private String daysOfWeek;
+    // A parser dans le service.
 
     @Getter @Setter
     @Column(nullable = true)
@@ -58,9 +58,17 @@ public class AutomationCondition extends BaseEntity {
     // Pour les conditions type : "Si inactif depuis x minutes"
 
     @Getter
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id")
-    private List<Automation> automations = new ArrayList<>();
+    private Automation automation;
 
+    @Getter @Setter
+    @Column(name = "device_id", insertable = false, updatable = false)
+    private Long deviceId;
+
+    @Getter @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "device_id")
+    private Device device;
 
 }

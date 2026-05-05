@@ -10,13 +10,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
+@Table(name="app_user")
 @NoArgsConstructor
-@ToString @EqualsAndHashCode
+@ToString @EqualsAndHashCode(callSuper = false)
 public class User extends BaseEntity {
 
 
     @Getter @Setter
-    @Column(nullable = false, name="username")
+    @Column(nullable = false)
     private String username;
 
     @Getter @Setter
@@ -28,8 +29,5 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String passwordHash;
 
-    @Getter @Setter
-    @Column()
-    private Set<HouseholdMember> memberships = new HashSet<>();
 
 }

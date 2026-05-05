@@ -14,6 +14,7 @@ public class AutomationConditionResponse {
 
     private Long id;
     private Long automationId;
+    private Long deviceId;
     private ConditionType conditionType;
     private DeviceStatus deviceStatus;
     private double thresholdValue;

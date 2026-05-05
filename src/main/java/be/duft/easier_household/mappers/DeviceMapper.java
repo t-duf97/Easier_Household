@@ -22,6 +22,7 @@ public class DeviceMapper {
         response.setUpdatedAt(device.getUpdatedAt());
         response.setDeviceType(device.getDeviceType());
         response.setRoomId(device.getRoomId());
+        response.setDeviceStatus(device.getStatus());
         response.setCurrentValue(device.getCurrentValue());
         return response;
     }

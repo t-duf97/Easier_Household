@@ -10,15 +10,16 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"automation","device"}, callSuper = false)
+@ToString(exclude={"automation","device"})
 public class AutomationAction extends BaseEntity {
 
     @Getter
-    @Column(nullable = false, name="automation_id")
+    @Column(nullable = false, name="automation_id", updatable = false, insertable = false)
     private Long automationId;
 
     @Getter @Setter
-    @Column(nullable = false, columnDefinition = "DEFAULT VALUE 1")
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private int executionOrder;
 
     @Getter @Setter
@@ -40,11 +41,20 @@ public class AutomationAction extends BaseEntity {
 
 
     @Getter @Setter
-    @Column(nullable = true, columnDefinition = "DEFAULT VALUE 0")
+    @Column(nullable = true, columnDefinition = "INTEGER DEFAULT 0")
     private int delayInSeconds;
 
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id", nullable = false)
-    private List<Automation> automations;
+    private Automation automation;
+
+    @Getter @Setter
+    @Column(name = "device_id", insertable = false, updatable = false)
+    private Long deviceId;
+
+    @Getter @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "device_id")
+    private Device device;
 }

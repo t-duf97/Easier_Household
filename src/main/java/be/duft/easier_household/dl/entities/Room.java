@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"household"}, callSuper = false)
+@ToString(exclude = {"household"})
 public class Room extends BaseEntity {
 
     @Getter @Setter

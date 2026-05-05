@@ -12,7 +12,7 @@ public class DeviceIntegrationResponse {
     private Long id;
     private String provider;
     private Long deviceId;
-    private Long external_device_id;
-    private String extra_config;
-    private LocalDateTime created_at;
+    private String externalDeviceId;
+    private String extraConfig;
+    private LocalDateTime createdAt;
 }

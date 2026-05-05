@@ -1,5 +1,6 @@
 package be.duft.easier_household.dl.entities;
 
+import be.duft.easier_household.converter.ZoneIdConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,8 @@ import java.util.Set;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode@ToString
+@EqualsAndHashCode(callSuper = false)
+@ToString
 public class Household extends BaseEntity {
 
     @Getter @Setter
@@ -19,18 +21,14 @@ public class Household extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = false)
+    @Convert(converter = ZoneIdConverter.class)
     private ZoneId timeZone;
 
 
-    @ManyToOne
-    @JoinColumn(name = "created_by_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     @Getter @Setter
     private User createdBy;
-
-    @Column
-    @Getter @Setter
-    private Set<HouseholdMember> members = new HashSet<>();
-
 
 
 }

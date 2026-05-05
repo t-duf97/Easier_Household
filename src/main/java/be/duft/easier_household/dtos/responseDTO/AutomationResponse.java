@@ -19,6 +19,4 @@ public class AutomationResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastTriggeredAt;
-
-
 }

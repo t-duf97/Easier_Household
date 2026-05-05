@@ -1,5 +1,6 @@
 package be.duft.easier_household.dtos.responseDTO;
 
+import be.duft.easier_household.dl.enums.ChangeSource;
 import be.duft.easier_household.dl.enums.DeviceStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,5 +16,6 @@ public class DeviceStateResponse {
     private String value;
     private LocalDateTime changedAt;
     private Long changedBy;
+    private ChangeSource changeSource;
 
 }

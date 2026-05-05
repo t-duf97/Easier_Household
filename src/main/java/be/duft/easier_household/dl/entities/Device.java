@@ -1,5 +1,6 @@
 package be.duft.easier_household.dl.entities;
 
+import be.duft.easier_household.dl.enums.DeviceStatus;
 import be.duft.easier_household.dl.enums.DeviceType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +9,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"assignedRoom"}, callSuper = false)
+@ToString(exclude = {"assignedRoom"})
 public class Device extends BaseEntity {
 
     @Getter @Setter
@@ -24,11 +26,10 @@ public class Device extends BaseEntity {
     @Column(name="room_id", insertable = false, updatable = false)
     private Long roomId;
 
-    @ManyToOne
-    @JoinColumn(name = "assigned_room_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
     @Getter @Setter
     private Room assignedRoom;
-
 
     @Getter @Setter
     @Column(nullable = true)
@@ -37,6 +38,10 @@ public class Device extends BaseEntity {
     @Getter @Setter
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private boolean isOnline;
+
+    @Getter @Setter
+    @Column(nullable = false)
+    private DeviceStatus status;
 
 
 }

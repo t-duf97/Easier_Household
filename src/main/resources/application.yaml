@@ -2,9 +2,9 @@ spring:
   application:
     name: Easier_Household
   datasource:
-    url: jdbc:postgresql://localhost:5432/product_hell
-    username: postgres
-    password: tftic@2026
+    url: jdbc:postgresql://localhost:5432/easierhouseholddb
+    username: tduf
+    password: N7bLZLDbz3Usq7
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

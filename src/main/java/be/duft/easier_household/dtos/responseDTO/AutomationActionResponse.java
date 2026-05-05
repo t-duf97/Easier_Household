@@ -10,6 +10,7 @@ public class AutomationActionResponse {
 
     private Long id;
     private Long automationId;
+    private Long deviceId;
     private Long executionOrder;
     private ActionType actionType;
     private DeviceStatus deviceStatus;

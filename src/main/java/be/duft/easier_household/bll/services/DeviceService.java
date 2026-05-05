@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +31,15 @@ public class DeviceService {
         Device device = deviceRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));
         return deviceMapper.fromEntityToResponse(device);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeviceResponse> findByRoomId(Long roomId) {
+        List<DeviceResponse> devices = deviceRepository.findByRoomId(roomId)
+                .stream()
+                .map(deviceMapper::fromEntityToResponse)
+                .collect(Collectors.toList());
+        return devices;
     }
 
 }

@@ -1,5 +1,6 @@
 package be.duft.easier_household.dl.entities;
 
+import be.duft.easier_household.dl.enums.ChangeSource;
 import be.duft.easier_household.dl.enums.DeviceStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,10 +9,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode @ToString
+@EqualsAndHashCode(exclude = {"device", "user"},callSuper = false)
+@ToString(exclude = {"device", "user"})
 public class DeviceState extends BaseEntity {
 
-    @Column(name="device_id", nullable = false,  unique = true)
+    @Column(name="device_id", insertable = false, updatable = false, nullable = false)
     @Getter
     private Long deviceId;
 
@@ -21,11 +23,14 @@ public class DeviceState extends BaseEntity {
     private DeviceStatus status;
 
     @Getter @Setter
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String value;
 
+    @Getter @Setter
+    private ChangeSource changeSource;
+
     @Getter
-    @Column(name="user_id") // M'a declenché une erreur au moment de faire la jointure?
+    @Column(name="user_id", insertable = false, updatable = false)
     private Long changedBy;
 
     // A voir ce que ça donne. Je ne sais pas si ma jointure est bien faite sur la table USer
@@ -38,7 +43,7 @@ public class DeviceState extends BaseEntity {
     @Getter @Setter
     private User user;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name="device_id")
     @Getter @Setter
     private Device device;

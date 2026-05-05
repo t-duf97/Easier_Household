@@ -8,6 +8,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor
+@EqualsAndHashCode(exclude = {"user", "household"}, callSuper = false)
+@ToString(exclude = {"user", "household"})
 public class HouseholdMember {
 
     @EmbeddedId
@@ -16,12 +19,12 @@ public class HouseholdMember {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
-    @Getter
+    @Getter @Setter
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("householdId")
-    @Getter
+    @Getter @Setter
     private Household household;
 
     @Getter @Setter

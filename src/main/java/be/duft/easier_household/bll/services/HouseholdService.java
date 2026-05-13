@@ -5,14 +5,22 @@ import be.duft.easier_household.dal.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dal.repositories.HouseholdRepository;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
+import be.duft.easier_household.dl.enums.Role;
+import be.duft.easier_household.dtos.requestDTO.HouseholdRequest;
 import be.duft.easier_household.dtos.responseDTO.HouseholdResponse;
 import be.duft.easier_household.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.mappers.HouseholdMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.connector.Response;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +29,7 @@ public class HouseholdService {
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
     private final HouseholdMapper householdMapper;
+    private final UserService userService;
 
     public HouseholdResponse findById(Long id) {
         Household household = householdRepository.findById(id)
@@ -29,5 +38,56 @@ public class HouseholdService {
         Set<HouseholdMember> members = householdMemberRepository.findByHousehold(household);
 
         return householdMapper.fromEntityToResponse(household, members);
+    }
+
+    public List<HouseholdResponse> findAllByUserId(Long userId) {
+        return householdMemberRepository.findByUserId(userId)
+                .stream()
+                .map(member -> householdMapper.fromEntityToResponse(member.getHousehold()))
+                .collect(Collectors.toList());
+    }
+
+    public HouseholdResponse create(HouseholdRequest request, Long userId) {
+        Household household = householdMapper.fromRequesttoEntity(request);
+
+        HouseholdMember householdMember = new HouseholdMember();
+        householdMember.setHousehold(household);
+        householdMember.setRole(Role.OWNER);
+        householdMember.setUser(userService.findById(userId));
+        householdMember.setJoinedAt(LocalDateTime.now());
+
+        householdMemberRepository.save(householdMember);
+        householdRepository.save(household);
+        return householdMapper.fromEntityToResponse(household);
+    }
+
+    public HouseholdResponse update(HouseholdRequest request, Long userId, Long id) {
+        Household household = householdRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
+
+        checkOwnership(household, userId);
+
+        householdMapper.updateEntityFromRequest(request, household);
+        return householdMapper.fromEntityToResponse(householdRepository.save(household));
+
+    }
+
+    public void delete(Long id, Long userId) {
+        Household household = householdRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
+
+        checkOwnership(household, userId);
+
+        householdRepository.delete(household);
+    }
+
+    private void checkOwnership(Household household, Long userId) {
+        HouseholdMember householdMember = householdMemberRepository
+                .findByHouseholdIdAndUserId(household.getId(), userId)
+                .orElseThrow(()-> new UnauthorizedAccessException("Not a member of this house!"));
+
+        if (!(householdMember.getRole().equals(Role.OWNER))) {
+            throw new UnauthorizedAccessException("You need to be the owner to do that.");
+        }
     }
 }

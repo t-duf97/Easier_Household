@@ -16,9 +16,9 @@ public abstract class BaseEntity {
 
     @Column(nullable = false, updatable = false)
     @Getter @Setter
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt =  LocalDateTime.now();
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Getter @Setter
     private LocalDateTime updatedAt;
 

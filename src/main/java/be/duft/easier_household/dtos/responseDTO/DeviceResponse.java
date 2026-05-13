@@ -15,7 +15,6 @@ public class DeviceResponse {
     private String name;
     private DeviceType deviceType;
     private Long roomId;
-    private Room assignedRoom;
     private String currentValue;
     private boolean isOnline;
     private DeviceStatus deviceStatus;

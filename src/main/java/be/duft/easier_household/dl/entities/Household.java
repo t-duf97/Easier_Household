@@ -24,11 +24,14 @@ public class Household extends BaseEntity {
     @Convert(converter = ZoneIdConverter.class)
     private ZoneId timeZone;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @Getter @Setter
     private User createdBy;
+
+    @Column(name = "address")
+    @Getter @Setter
+    private String address;
 
 
 }

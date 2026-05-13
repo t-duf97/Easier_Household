@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"household"}, callSuper = false)
 @ToString(exclude = {"household"})
+@Table(name="room")
 public class Room extends BaseEntity {
 
     @Getter @Setter

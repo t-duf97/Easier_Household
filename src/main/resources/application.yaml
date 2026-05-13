@@ -1,4 +1,5 @@
 spring:
+
   application:
     name: Easier_Household
   datasource:
@@ -6,9 +7,13 @@ spring:
     username: tduf
     password: N7bLZLDbz3Usq7
     driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
   jpa:
+    defer-datasource-initialization: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:

@@ -27,4 +27,16 @@ public class RoomMapper {
         room.setRoomType(roomRequest.getRoomType());
         return room;
     }
+
+    public void updateEntityFromRequest(RoomRequest request, Room room){
+        if (request.getFloor() != null){
+            room.setFloor(request.getFloor());
+        }
+        if (request.getRoomType() != null){
+            room.setRoomType(request.getRoomType());
+        }
+        if (request.getName() != null){
+            room.setName(request.getName());
+        }
+    }
 }

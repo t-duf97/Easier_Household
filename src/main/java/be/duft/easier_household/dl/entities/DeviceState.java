@@ -27,7 +27,13 @@ public class DeviceState extends BaseEntity {
     private String value;
 
     @Getter @Setter
+    @Column
     private ChangeSource changeSource;
+
+    @Getter @Setter
+    @Column
+    private LocalDateTime changedAt;
+
 
     @Getter
     @Column(name="user_id", insertable = false, updatable = false)

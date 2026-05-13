@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RoomRepository extends BaseRepository<Room, Long> {
+
+    Room findByHouseholdId(Long householdId);
+
 }

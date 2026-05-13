@@ -7,6 +7,8 @@ import lombok.*;
 import org.springframework.aot.hint.annotation.RegisterReflection;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
@@ -27,7 +29,7 @@ public class Automation extends BaseEntity {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'ALL'")
+    @Column(nullable = false)
     @Getter @Setter
     private ConditionLogic conditionLogic;
 
@@ -54,6 +56,15 @@ public class Automation extends BaseEntity {
     @JoinColumn(name="household_id", updatable = false, insertable = false)
     @Getter
     private Household household;
+
+    @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AutomationTrigger> triggers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AutomationCondition> conditions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AutomationAction> actions = new ArrayList<>();
 
 
 }

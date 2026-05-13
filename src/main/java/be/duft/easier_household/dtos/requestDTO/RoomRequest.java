@@ -16,8 +16,7 @@ public class RoomRequest {
     @NotNull
     private RoomType roomType;
 
-    @NotNull
-    private int floor;
+    private Integer floor;
 
 
 

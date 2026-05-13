@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"assignedRoom"}, callSuper = false)
 @ToString(exclude = {"assignedRoom"})
+@Table(name="device")
 public class Device extends BaseEntity {
 
     @Getter @Setter
@@ -26,10 +27,6 @@ public class Device extends BaseEntity {
     @Column(name="room_id", insertable = false, updatable = false)
     private Long roomId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id")
-    @Getter @Setter
-    private Room assignedRoom;
 
     @Getter @Setter
     @Column(nullable = true)
@@ -40,8 +37,13 @@ public class Device extends BaseEntity {
     private boolean isOnline;
 
     @Getter @Setter
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceStatus status;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id")
+    @Getter @Setter
+    private Room assignedRoom;
 
 }

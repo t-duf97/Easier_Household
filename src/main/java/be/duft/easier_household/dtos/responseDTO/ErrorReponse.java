@@ -1,4 +1,4 @@
-package be.duft.easier_household.exceptions;
+package be.duft.easier_household.dtos.responseDTO;
 
 import lombok.*;
 

@@ -11,11 +11,12 @@ public class AutomationActionResponse {
     private Long id;
     private Long automationId;
     private Long deviceId;
-    private Long executionOrder;
+    private int executionOrder;
     private ActionType actionType;
     private DeviceStatus deviceStatus;
     private String targetValue;
-    private String notificationMessage;
+    private String notificationMsg;
     private int delayInSeconds;
+    private String deviceName;
 
 }

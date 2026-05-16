@@ -17,14 +17,16 @@ public class AutomationActionRequest {
     private ActionType actionType;
 
     @NotNull
-    private DeviceStatus target_status;
+    private DeviceStatus targetStatus;
 
     private String targetValue;
 
     @NotBlank
-    private String notificationMessage;
+    private String notificationMsg;
 
     private int delayInSeconds;
+
+    private Long deviceId;
 
 
 }

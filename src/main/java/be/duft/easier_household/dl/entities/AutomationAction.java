@@ -14,10 +14,6 @@ import java.util.List;
 @ToString(exclude={"automation","device"})
 public class AutomationAction extends BaseEntity {
 
-    @Getter
-    @Column(nullable = false, name="automation_id", updatable = false, insertable = false)
-    private Long automationId;
-
     @Getter @Setter
     @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 1")
     private int executionOrder;
@@ -39,7 +35,6 @@ public class AutomationAction extends BaseEntity {
     @Column(nullable = true)
     private String notificationMsg;
 
-
     @Getter @Setter
     @Column(nullable = true, columnDefinition = "INTEGER DEFAULT 0")
     private int delayInSeconds;
@@ -50,6 +45,7 @@ public class AutomationAction extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id", nullable = false)
+    @Getter @Setter
     private Automation automation;
 
 

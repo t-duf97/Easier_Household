@@ -13,10 +13,6 @@ import java.time.LocalDateTime;
 @ToString(exclude = {"device", "user"})
 public class DeviceState extends BaseEntity {
 
-    @Column(name="device_id", insertable = false, updatable = false, nullable = false)
-    @Getter
-    private Long deviceId;
-
     @Enumerated(EnumType.STRING)
     @Getter @Setter
     @Column(nullable = false)

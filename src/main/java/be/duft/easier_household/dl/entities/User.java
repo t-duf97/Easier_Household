@@ -28,6 +28,4 @@ public class User extends BaseEntity {
     @Getter @Setter
     @Column(nullable = false)
     private String passwordHash;
-
-
 }

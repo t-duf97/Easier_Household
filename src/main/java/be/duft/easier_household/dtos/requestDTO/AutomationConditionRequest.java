@@ -2,6 +2,7 @@ package be.duft.easier_household.dtos.requestDTO;
 
 import be.duft.easier_household.dl.enums.ConditionType;
 import be.duft.easier_household.dl.enums.DeviceStatus;
+import be.duft.easier_household.dl.enums.ThresholdOperator;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,16 +22,21 @@ public class AutomationConditionRequest {
 
     private double thresholdValue;
 
-    private double threshldOperator;
+    private ThresholdOperator thresholdOperator;
 
-    private LocalTime time_from;
+    private LocalTime timeFrom;
 
-    private LocalTime time_to;
+    private LocalTime timeTo;
 
     @NotNull
-    private List<String> daysOfWeek;
+    private String daysOfWeek;
 
     private int durationInMinutes;
+
+    private Long deviceId;
+
+    private String deviceName;
+
 
 
 

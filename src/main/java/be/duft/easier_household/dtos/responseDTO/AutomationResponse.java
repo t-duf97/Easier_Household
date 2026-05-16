@@ -5,6 +5,8 @@ import lombok.Setter;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter @Setter
 public class AutomationResponse {
@@ -19,4 +21,8 @@ public class AutomationResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastTriggeredAt;
+
+    private List<AutomationActionResponse> actions;
+    private List<AutomationTriggerResponse> triggers;
+    private List<AutomationConditionResponse> conditions;
 }

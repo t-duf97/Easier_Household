@@ -18,9 +18,6 @@ import java.util.List;
 @ToString(exclude = {"automation", "device"})
 public class AutomationTrigger extends BaseEntity {
 
-    @Getter @Setter
-    @Column(name="automation_id", updatable = false, insertable = false)
-    private Long automationId;
 
     @Getter @Setter
     @Column(nullable = false)
@@ -53,14 +50,15 @@ public class AutomationTrigger extends BaseEntity {
     private ThresholdOperator thresholdOperator;
     // Utile uniquement dans le cas d'une comparaison avec une valeur et d'une thresholdvalue
 
+    @Getter @Setter
+    @Column(nullable = true)
+    private String cronExpression;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id")
-    @Getter
+    @Getter @Setter
     private Automation automation;
 
-    @Getter @Setter
-    @Column(name = "device_id", insertable = false, updatable = false)
-    private Long deviceId;
 
     @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)

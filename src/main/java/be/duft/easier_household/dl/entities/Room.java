@@ -22,10 +22,6 @@ public class Room extends BaseEntity {
     @Column(nullable = false)
     private int floor;
 
-    @Column(name = "household_id", insertable = false, updatable = false)
-    @Getter
-    private Long householdId;
-
     @Getter @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

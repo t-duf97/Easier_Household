@@ -17,9 +17,11 @@ public class AutomationTriggerResponse {
     private Long deviceId;
     private Long automationId;
     private TriggerType triggerType;
-    private LocalTime time_value;
+    private LocalTime timeValue;
     private String daysOfWeek;
     private DeviceStatus expectedStatus;
     private double thresholdValue;
     private ThresholdOperator thresholdOperator;
+    private String cronExpression;
+    private String deviceName;
 }

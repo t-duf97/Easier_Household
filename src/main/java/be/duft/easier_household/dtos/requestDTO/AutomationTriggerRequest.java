@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter @Setter
@@ -16,9 +17,9 @@ public class AutomationTriggerRequest {
     @NotNull
     private TriggerType triggerType;
 
-    private LocalDateTime time_value;
+    private LocalTime timeValue;
 
-    private List<String> daysOfWeek;
+    private String daysOfWeek;
 
     @NotNull
     private DeviceStatus expectedStatus;
@@ -26,6 +27,10 @@ public class AutomationTriggerRequest {
     private double thresholdValue;
 
     private ThresholdOperator thresholdOperator;
+
+    private String cronExpression;
+
+    private Long deviceId;
 
 
 

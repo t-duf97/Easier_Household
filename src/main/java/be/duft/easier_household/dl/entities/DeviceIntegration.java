@@ -15,10 +15,6 @@ public class DeviceIntegration extends BaseEntity {
     @Column(nullable = false)
     private String provider;
 
-    @Getter @Setter
-    @Column(name ="device_id", insertable = false, updatable = false, nullable = false)
-    private Long deviceId;
-
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name="device_id")
     @Getter @Setter

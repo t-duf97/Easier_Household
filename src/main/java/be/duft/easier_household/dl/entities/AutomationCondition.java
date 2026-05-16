@@ -16,10 +16,6 @@ import java.util.List;
 @ToString(exclude = {"automation", "device"})
 public class AutomationCondition extends BaseEntity {
 
-    @Getter
-    @Column(name = "automation_id", updatable = false, insertable = false)
-    private Long automationId;
-
     @Enumerated(EnumType.STRING)
     @Getter @Setter
     @Column(nullable = false)
@@ -57,14 +53,10 @@ public class AutomationCondition extends BaseEntity {
     private int durationInMinutes;
     // Pour les conditions type : "Si inactif depuis x minutes"
 
-    @Getter
+    @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id")
     private Automation automation;
-
-    @Getter @Setter
-    @Column(name = "device_id", insertable = false, updatable = false)
-    private Long deviceId;
 
     @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)

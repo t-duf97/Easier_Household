@@ -51,7 +51,7 @@ public class DeviceController {
           return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<DeviceResponse> updateDevice(
             @PathVariable Long id,
             @Valid @RequestBody DeviceRequest request) {

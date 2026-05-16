@@ -16,9 +16,6 @@ import java.util.List;
 @ToString(exclude = {"household","user"})
 public class Automation extends BaseEntity {
 
-    @Getter
-    @Column(name="household_id", updatable = false,  insertable = false)
-    private Long householdId;
 
     @Getter @Setter
     @Column(nullable = false)
@@ -39,31 +36,29 @@ public class Automation extends BaseEntity {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private boolean isEnabled;
 
-    @Getter
-    @Column(name="user_id", updatable = false, insertable = false) // M'a declenché une erreur au moment de faire la jointure?
-    private Long createdBy;
-
     @Getter @Setter
     private LocalDateTime lastTriggeredAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")
-    @Getter
-    private User user;
+    @Getter @Setter
+    private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="household_id", updatable = false, insertable = false)
-    @Getter
+    @Getter @Setter
     private Household household;
 
     @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter @Setter
     private List<AutomationTrigger> triggers = new ArrayList<>();
 
     @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter @Setter
     private List<AutomationCondition> conditions = new ArrayList<>();
 
     @OneToMany(mappedBy = "automation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Getter @Setter
     private List<AutomationAction> actions = new ArrayList<>();
 
 

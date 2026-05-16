@@ -24,11 +24,6 @@ public class Device extends BaseEntity {
     private DeviceType deviceType;
 
     @Getter @Setter
-    @Column(name="room_id", insertable = false, updatable = false)
-    private Long roomId;
-
-
-    @Getter @Setter
     @Column(nullable = true)
     private String currentValue;
 

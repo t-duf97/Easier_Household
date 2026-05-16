@@ -38,7 +38,6 @@ public class DeviceMapper {
         Device device = new Device();
         device.setName(request.getName());
         device.setAssignedRoom(room);
-        device.setRoomId(room.getId());
         device.setDeviceType(request.getDeviceType());
         device.setStatus(DeviceStatus.OFF);
         device.setOnline(true);
@@ -53,7 +52,7 @@ public class DeviceMapper {
     public DeviceStateResponse toStateResponse(DeviceState state) {
         DeviceStateResponse response = new DeviceStateResponse();
         response.setId(state.getId());
-        response.setDeviceId(state.getDeviceId());
+        response.setDeviceId(state.getDevice().getId());
         response.setValue(state.getValue());
         response.setChangeSource(state.getChangeSource());
         response.setChangedAt(state.getChangedAt());

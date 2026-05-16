@@ -21,7 +21,8 @@ public class AutomationConditionResponse {
     private ThresholdOperator thresholdOperator;
     private LocalTime timeFrom;
     private LocalTime timeTo;
-    private List<String> daysOfWeek;
+    private String daysOfWeek;
     private int durationInMinutes;
+    private String deviceName;
 
 }

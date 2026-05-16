@@ -15,7 +15,7 @@ public class RoomMapper {
         response.setName(room.getName());
         response.setCreated_at(room.getCreatedAt());
         response.setFloor(room.getFloor());
-        response.setHouseholdId(room.getHouseholdId());
+        response.setHouseholdId(room.getHousehold().getId());
         response.setRoomType(room.getRoomType());
         return response;
     }

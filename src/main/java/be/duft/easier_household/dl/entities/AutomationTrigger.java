@@ -6,6 +6,7 @@ import be.duft.easier_household.dl.enums.ThresholdOperator;
 import be.duft.easier_household.dl.enums.TriggerType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;

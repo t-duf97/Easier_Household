@@ -86,9 +86,6 @@ public class AutomationService {
 
 
 
-
-
-
     public Automation getAutomationOrThrow(Long id) {
         return automationRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Automation not found: " +  id));

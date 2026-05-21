@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.requestDTO;
+package be.duft.easier_household.dtos.request;
 
 public class DeviceIntegrationRequest {
 

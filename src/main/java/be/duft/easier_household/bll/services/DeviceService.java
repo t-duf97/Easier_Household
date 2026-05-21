@@ -7,12 +7,13 @@ import be.duft.easier_household.dal.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
 import be.duft.easier_household.dl.entities.Room;
-import be.duft.easier_household.dtos.requestDTO.DeviceRequest;
-import be.duft.easier_household.dtos.responseDTO.DeviceResponse;
-import be.duft.easier_household.dtos.responseDTO.DeviceStateResponse;
+import be.duft.easier_household.dtos.request.DeviceRequest;
+import be.duft.easier_household.dtos.response.DeviceResponse;
+import be.duft.easier_household.dtos.response.DeviceStateResponse;
 import be.duft.easier_household.exceptions.DeviceUnavailableException;
 import be.duft.easier_household.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.mappers.DeviceMapper;
+import be.duft.easier_household.scheduler.AutomationScheduler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,7 @@ public class DeviceService {
     private final RoomRepository roomRepository;
     private final DeviceStateRepository deviceStateRepository;
     private final DeviceMapper deviceMapper;
+    private final AutomationScheduler automationScheduler;
 
     @Transactional(readOnly = true)
     public DeviceResponse findById(Long id) {
@@ -87,6 +89,8 @@ public class DeviceService {
         device.setCurrentValue(request.getValue());
         device.setUpdatedAt(LocalDateTime.now());
         deviceRepository.save(device);
+
+        automationScheduler.evaluateDeviceStateAutomations(device.getId(), request.getStatus());
 
         return deviceMapper.fromEntityToResponse(device);
 

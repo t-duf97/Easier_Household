@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.requestDTO;
+package be.duft.easier_household.dtos.request;
 
 import be.duft.easier_household.dl.enums.ConditionType;
 import be.duft.easier_household.dl.enums.DeviceStatus;
@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalTime;
-import java.util.List;
 
 @Getter @Setter
 public class AutomationConditionRequest {

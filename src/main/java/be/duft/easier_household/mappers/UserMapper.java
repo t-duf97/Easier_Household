@@ -2,8 +2,8 @@ package be.duft.easier_household.mappers;
 
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.User;
-import be.duft.easier_household.dtos.requestDTO.UserRequest;
-import be.duft.easier_household.dtos.responseDTO.UserResponse;
+import be.duft.easier_household.dtos.request.UserRequest;
+import be.duft.easier_household.dtos.response.UserResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;

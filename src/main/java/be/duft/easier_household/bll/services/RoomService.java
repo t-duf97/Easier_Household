@@ -6,15 +6,14 @@ import be.duft.easier_household.dal.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.entities.Room;
-import be.duft.easier_household.dtos.requestDTO.RoomRequest;
-import be.duft.easier_household.dtos.responseDTO.RoomResponse;
+import be.duft.easier_household.dtos.request.RoomRequest;
+import be.duft.easier_household.dtos.response.RoomResponse;
 import be.duft.easier_household.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.mappers.RoomMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.stream.Collectors;

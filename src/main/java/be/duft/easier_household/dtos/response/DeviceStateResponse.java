@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.responseDTO;
+package be.duft.easier_household.dtos.response;
 
 import be.duft.easier_household.dl.enums.ChangeSource;
 import be.duft.easier_household.dl.enums.DeviceStatus;

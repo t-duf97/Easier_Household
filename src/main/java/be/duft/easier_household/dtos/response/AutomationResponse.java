@@ -1,11 +1,10 @@
-package be.duft.easier_household.dtos.responseDTO;
+package be.duft.easier_household.dtos.response;
 
 import be.duft.easier_household.dl.enums.ConditionLogic;
 import lombok.Setter;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter @Setter

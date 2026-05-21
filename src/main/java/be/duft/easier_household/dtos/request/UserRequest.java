@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.requestDTO;
+package be.duft.easier_household.dtos.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

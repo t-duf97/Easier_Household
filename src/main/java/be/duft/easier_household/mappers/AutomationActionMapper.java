@@ -2,8 +2,8 @@ package be.duft.easier_household.mappers;
 
 import be.duft.easier_household.dal.repositories.DeviceRepository;
 import be.duft.easier_household.dl.entities.AutomationAction;
-import be.duft.easier_household.dtos.requestDTO.AutomationActionRequest;
-import be.duft.easier_household.dtos.responseDTO.AutomationActionResponse;
+import be.duft.easier_household.dtos.request.AutomationActionRequest;
+import be.duft.easier_household.dtos.response.AutomationActionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

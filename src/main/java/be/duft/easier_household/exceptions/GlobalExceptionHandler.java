@@ -1,6 +1,6 @@
 package be.duft.easier_household.exceptions;
 
-import be.duft.easier_household.dtos.responseDTO.ErrorReponse;
+import be.duft.easier_household.dtos.response.ErrorReponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

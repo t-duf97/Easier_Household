@@ -1,21 +1,17 @@
 package be.duft.easier_household.bll.services;
 
-import be.duft.easier_household.dal.repositories.DeviceRepository;
 import be.duft.easier_household.dal.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dal.repositories.HouseholdRepository;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.enums.Role;
-import be.duft.easier_household.dtos.requestDTO.HouseholdRequest;
-import be.duft.easier_household.dtos.responseDTO.HouseholdResponse;
+import be.duft.easier_household.dtos.request.HouseholdRequest;
+import be.duft.easier_household.dtos.response.HouseholdResponse;
 import be.duft.easier_household.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.mappers.HouseholdMapper;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.connector.Response;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDateTime;
 import java.util.List;

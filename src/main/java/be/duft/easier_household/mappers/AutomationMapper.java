@@ -2,8 +2,8 @@ package be.duft.easier_household.mappers;
 
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.ConditionLogic;
-import be.duft.easier_household.dtos.requestDTO.AutomationRequest;
-import be.duft.easier_household.dtos.responseDTO.AutomationResponse;
+import be.duft.easier_household.dtos.request.AutomationRequest;
+import be.duft.easier_household.dtos.response.AutomationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

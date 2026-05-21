@@ -1,13 +1,9 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.DeviceService;
-import be.duft.easier_household.dl.entities.Device;
-import be.duft.easier_household.dl.entities.DeviceState;
-import be.duft.easier_household.dtos.requestDTO.DeviceRequest;
-import be.duft.easier_household.dtos.requestDTO.DeviceStateRequest;
-import be.duft.easier_household.dtos.responseDTO.DeviceResponse;
-import be.duft.easier_household.dtos.responseDTO.DeviceStateResponse;
-import be.duft.easier_household.exceptions.DeviceUnavailableException;
+import be.duft.easier_household.dtos.request.DeviceRequest;
+import be.duft.easier_household.dtos.response.DeviceResponse;
+import be.duft.easier_household.dtos.response.DeviceStateResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

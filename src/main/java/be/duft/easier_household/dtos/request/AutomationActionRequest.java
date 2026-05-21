@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.requestDTO;
+package be.duft.easier_household.dtos.request;
 
 import be.duft.easier_household.dl.enums.ActionType;
 import be.duft.easier_household.dl.enums.DeviceStatus;

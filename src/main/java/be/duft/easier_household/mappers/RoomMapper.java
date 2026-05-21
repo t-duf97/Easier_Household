@@ -1,8 +1,8 @@
 package be.duft.easier_household.mappers;
 
 import be.duft.easier_household.dl.entities.Room;
-import be.duft.easier_household.dtos.requestDTO.RoomRequest;
-import be.duft.easier_household.dtos.responseDTO.RoomResponse;
+import be.duft.easier_household.dtos.request.RoomRequest;
+import be.duft.easier_household.dtos.response.RoomResponse;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -18,5 +18,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+logging:
+  level:
+    be.duft.easier_household.scheduler: DEBUG
+
 server:
   port: 8080

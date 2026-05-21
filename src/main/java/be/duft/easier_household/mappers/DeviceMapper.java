@@ -4,13 +4,10 @@ import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
 import be.duft.easier_household.dl.entities.Room;
 import be.duft.easier_household.dl.enums.DeviceStatus;
-import be.duft.easier_household.dl.enums.DeviceType;
-import be.duft.easier_household.dtos.requestDTO.DeviceRequest;
-import be.duft.easier_household.dtos.responseDTO.DeviceResponse;
-import be.duft.easier_household.dtos.responseDTO.DeviceStateResponse;
+import be.duft.easier_household.dtos.request.DeviceRequest;
+import be.duft.easier_household.dtos.response.DeviceResponse;
+import be.duft.easier_household.dtos.response.DeviceStateResponse;
 import org.springframework.stereotype.Component;
-
-import java.time.LocalDateTime;
 
 @Component
 public class DeviceMapper {

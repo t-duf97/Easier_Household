@@ -1,6 +1,5 @@
-package be.duft.easier_household.dtos.responseDTO;
+package be.duft.easier_household.dtos.response;
 
-import be.duft.easier_household.dl.entities.Room;
 import be.duft.easier_household.dl.enums.DeviceStatus;
 import be.duft.easier_household.dl.enums.DeviceType;
 import lombok.Getter;

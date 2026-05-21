@@ -1,4 +1,4 @@
-package be.duft.easier_household.dtos.responseDTO;
+package be.duft.easier_household.dtos.response;
 
 import be.duft.easier_household.dl.embeddable.HouseholdMemberId;
 import be.duft.easier_household.dl.entities.Household;

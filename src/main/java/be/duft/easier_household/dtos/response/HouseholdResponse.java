@@ -1,14 +1,11 @@
-package be.duft.easier_household.dtos.responseDTO;
+package be.duft.easier_household.dtos.response;
 
-import be.duft.easier_household.converter.ZoneIdConverter;
 import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.entities.User;
-import jakarta.persistence.Convert;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Set;
 

@@ -18,7 +18,11 @@ public class User extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = false)
-    private String username;
+    private String firstName;
+
+    @Getter @Setter
+    @Column(nullable = false)
+    private String lastName;
 
     @Getter @Setter
     @Column(nullable = false, unique = true)

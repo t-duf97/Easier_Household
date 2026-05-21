@@ -2,9 +2,8 @@ package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.HouseholdService;
 import be.duft.easier_household.bll.services.RoomService;
-import be.duft.easier_household.dl.entities.Household;
-import be.duft.easier_household.dtos.requestDTO.RoomRequest;
-import be.duft.easier_household.dtos.responseDTO.RoomResponse;
+import be.duft.easier_household.dtos.request.RoomRequest;
+import be.duft.easier_household.dtos.response.RoomResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

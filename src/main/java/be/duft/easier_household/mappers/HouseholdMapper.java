@@ -2,12 +2,11 @@ package be.duft.easier_household.mappers;
 
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
-import be.duft.easier_household.dtos.requestDTO.HouseholdRequest;
-import be.duft.easier_household.dtos.responseDTO.HouseholdResponse;
+import be.duft.easier_household.dtos.request.HouseholdRequest;
+import be.duft.easier_household.dtos.response.HouseholdResponse;
 import org.springframework.stereotype.Component;
 
 import java.time.ZoneId;
-import java.util.List;
 import java.util.Set;
 
 @Component

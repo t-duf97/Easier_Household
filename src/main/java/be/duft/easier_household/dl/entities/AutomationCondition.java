@@ -50,7 +50,7 @@ public class AutomationCondition extends BaseEntity {
 
     @Getter @Setter
     @Column(nullable = true)
-    private int durationInMinutes;
+    private Integer durationInMinutes;
     // Pour les conditions type : "Si inactif depuis x minutes"
 
     @Getter @Setter

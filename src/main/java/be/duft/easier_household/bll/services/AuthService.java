@@ -35,6 +35,7 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setCreatedAt(LocalDateTime.now());
+        user.setUsername(request.getUserName());
 
         User saved = userRepository.save(user);
 
@@ -57,7 +58,10 @@ public class AuthService {
                 .accessToken(token)
                 .userId(user.getId())
                 .email(user.getEmail())
+                .tokenType("Bearer")
                 .firstName(user.getFirstName())
+                .userName(user.getUsername())
+                .lastName(user.getLastName())
                 .build();
     }
 }

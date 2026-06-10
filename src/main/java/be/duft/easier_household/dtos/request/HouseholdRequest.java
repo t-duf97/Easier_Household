@@ -12,10 +12,9 @@ import java.util.Set;
 @Getter @Setter
 public class HouseholdRequest {
 
-    @NotBlank
+
     private String name;
 
-    @NotNull
 //    @Convert(converter = ZoneIdConverter.class)
     private String timeZone;
 

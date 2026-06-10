@@ -12,8 +12,9 @@ public class RoomResponse {
     private Long id;
     private String name;
     private int floor;
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
     private Long householdId;
     private RoomType roomType;
+    private Integer deviceCount;
 
 }

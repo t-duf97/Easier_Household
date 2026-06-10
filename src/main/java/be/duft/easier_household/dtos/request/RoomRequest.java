@@ -10,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class RoomRequest {
 
-    @NotBlank
+
     private String name;
 
     @NotNull

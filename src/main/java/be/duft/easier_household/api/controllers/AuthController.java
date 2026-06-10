@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController extends BaseController {
 
     private final AuthService authService;
 
@@ -29,4 +29,6 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login (@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
+
+
 }

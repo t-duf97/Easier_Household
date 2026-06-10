@@ -20,11 +20,16 @@ public class AutomationActionMapper {
         response.setExecutionOrder(action.getExecutionOrder());
         response.setActionType(action.getActionType());
         response.setTargetValue(action.getTargetValue());
-        response.setDeviceId(action.getDeviceId());
+        response.setDeviceId(action.getDevice().getId());
         response.setDeviceStatus(action.getDevice().getStatus());
         response.setNotificationMsg(action.getNotificationMsg());
         response.setDelayInSeconds(action.getDelayInSeconds());
 
+
+        if (action.getDevice() != null) {
+            response.setDeviceId(action.getDevice().getId());
+            response.setDeviceStatus(action.getDevice().getStatus());
+        }
         return response;
 
     }
@@ -40,7 +45,8 @@ public class AutomationActionMapper {
         action.setTargetStatus(request.getTargetStatus());
 
         if (request.getDeviceId() != null) {
-            action.setDeviceId(request.getDeviceId());
+            deviceRepository.findById(request.getDeviceId())
+                    .ifPresent(action::setDevice);
         }
 
         return action;

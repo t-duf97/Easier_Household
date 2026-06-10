@@ -1,12 +1,14 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.AutomationService;
+import be.duft.easier_household.dl.entities.User;
 import be.duft.easier_household.dtos.request.AutomationRequest;
 import be.duft.easier_household.dtos.response.AutomationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +17,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
-public class AutomationController {
+public class AutomationController extends BaseController {
 
     private final AutomationService automationService;
 
@@ -23,48 +25,34 @@ public class AutomationController {
     @PostMapping("/households/{householdId}/automations")
     public ResponseEntity<AutomationResponse> createAutomation(
             @PathVariable Long householdId,
-            @Valid @RequestBody AutomationRequest request,
-            Long userId
+            @Valid @RequestBody AutomationRequest request
     ){
-        AutomationResponse automation = automationService.create(householdId, request, userId);
+        AutomationResponse automation = automationService.create(householdId, request, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(automation);
     }
 
     @GetMapping("/households/{householdId}/automations")
-    public ResponseEntity<List<AutomationResponse>> getAllAutomations(
-            @PathVariable Long householdId,
-            Long userId
-    ){
-        List<AutomationResponse> automations = automationService.findByHousehold(householdId, userId);
+    public ResponseEntity<List<AutomationResponse>> getAllAutomations(@PathVariable Long householdId){
+        List<AutomationResponse> automations = automationService.findByHousehold(householdId, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.OK).body(automations);
     }
 
     @GetMapping("/automations/{id}")
-    public ResponseEntity<AutomationResponse> getAutomation(
-            @PathVariable Long id,
-            Long userId
-    ){
-        AutomationResponse automation = automationService.findById(id, userId);
+    public ResponseEntity<AutomationResponse> getAutomation(@PathVariable Long id){
+        AutomationResponse automation = automationService.findById(id, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.OK).body(automation);
     }
 
     @PatchMapping("/automations/{id}/toggle")
-    public ResponseEntity<AutomationResponse> toggleAutomation(
-            @PathVariable Long id,
-            Long userId
-    ){
-        AutomationResponse automation = automationService.toggleEnabled(id, userId);
+    public ResponseEntity<AutomationResponse> toggleAutomation(@PathVariable Long id){
+        AutomationResponse automation = automationService.toggleEnabled(id, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.OK).body(automation);
     }
 
     @DeleteMapping("/automations/{id}")
-    public ResponseEntity<AutomationResponse> deleteAutomation(
-            @PathVariable Long id,
-            Long userId
-    ){
-        automationService.delete(id, userId);
+    public ResponseEntity<AutomationResponse> deleteAutomation(@PathVariable Long id){
+        automationService.delete(id, getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
-
 
 }

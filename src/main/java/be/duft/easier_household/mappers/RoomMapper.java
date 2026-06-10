@@ -1,22 +1,29 @@
 package be.duft.easier_household.mappers;
 
+import be.duft.easier_household.dal.repositories.DeviceRepository;
+import be.duft.easier_household.dal.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Room;
 import be.duft.easier_household.dtos.request.RoomRequest;
 import be.duft.easier_household.dtos.response.RoomResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class RoomMapper {
+
+    private final DeviceRepository deviceRepository;
 
     public RoomResponse FromEntityToResponse(Room room){
 
         RoomResponse response = new RoomResponse();
         response.setId(room.getId());
         response.setName(room.getName());
-        response.setCreated_at(room.getCreatedAt());
+        response.setCreatedAt(room.getCreatedAt());
         response.setFloor(room.getFloor());
         response.setHouseholdId(room.getHousehold().getId());
         response.setRoomType(room.getRoomType());
+        response.setDeviceCount(deviceRepository.countByRoomId(room.getId()));
         return response;
     }
 

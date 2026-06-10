@@ -10,9 +10,14 @@ import java.util.List;
 @Repository
 public interface DeviceRepository extends BaseRepository<Device, Long> {
 
-    List<Device> findByRoomId(Long roomId);
+        List<Device> findByAssignedRoom_Id(Long roomId);
 
-    List<Device> findByHouseholdId(Long householdId);
+        int countByRoomId(Long roomId);
 
-    List<Device> findByDeviceType(DeviceType type);
-}
+        List<Device> findByAssignedRoom_Household_Id(Long householdId);
+
+        List<Device> findByDeviceTypeAndAssignedRoom_Household_Id(DeviceType deviceType, Long householdId);
+
+        List<Device> findByDeviceType(DeviceType deviceType);
+    }
+

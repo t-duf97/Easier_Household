@@ -25,6 +25,7 @@ public class AutomationTriggerMapper {
         response.setThresholdOperator(trigger.getThresholdOperator());
         response.setCronExpression(trigger.getCronExpression());
         response.setExpectedStatus(trigger.getExpectedStatus());
+        response.setDaysOfWeek(trigger.getDaysOfWeek());
 
         if (trigger.getDevice() != null){
             response.setDeviceId(trigger.getDevice().getId());

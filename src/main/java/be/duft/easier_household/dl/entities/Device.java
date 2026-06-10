@@ -37,7 +37,7 @@ public class Device extends BaseEntity {
     private DeviceStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id")
+    @JoinColumn(name = "roomId")
     @Getter @Setter
     private Room assignedRoom;
 

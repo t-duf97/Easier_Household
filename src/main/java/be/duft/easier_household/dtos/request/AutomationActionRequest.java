@@ -27,6 +27,4 @@ public class AutomationActionRequest {
     private int delayInSeconds;
 
     private Long deviceId;
-
-
 }

@@ -19,4 +19,7 @@ public class DeviceResponse {
     private DeviceStatus deviceStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private String roomName;
+    private String householdName;
 }

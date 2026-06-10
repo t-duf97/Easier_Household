@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class HouseholdMember {
 
     @EmbeddedId
-    @Getter
+    @Getter @Setter
     private HouseholdMemberId householdMemberId;
 
     @ManyToOne(fetch = FetchType.LAZY)

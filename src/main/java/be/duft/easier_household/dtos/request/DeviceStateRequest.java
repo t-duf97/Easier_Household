@@ -1,6 +1,8 @@
 package be.duft.easier_household.dtos.request;
 
 import be.duft.easier_household.dl.enums.DeviceStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,11 +13,9 @@ import java.time.LocalDateTime;
 @Setter
 public class DeviceStateRequest {
 
-    // Il s'agit de l'historique, je risque d'avoir aucune requete user.
-    // Je vais quand meme utiliser le request/response et les mappers.
 
-    @NotNull
-    private DeviceStatus deviceStatus;
+    @Enumerated(EnumType.STRING)
+    private DeviceStatus status;
 
     private String value;
 

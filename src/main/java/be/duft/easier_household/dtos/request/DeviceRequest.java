@@ -12,18 +12,19 @@ import lombok.Setter;
 @Getter @Setter
 public class DeviceRequest {
 
-    @NotBlank
+
     private String name;
 
     @Enumerated(EnumType.STRING)
     private DeviceType deviceType;
 
+    @Enumerated(EnumType.STRING)
     private DeviceStatus status;
 
     private String value;
 
     @Enumerated(EnumType.STRING)
-    private ChangeSource source;
+    private ChangeSource source = ChangeSource.MANUAL;
 
 
 }

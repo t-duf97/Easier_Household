@@ -15,6 +15,7 @@ import be.duft.easier_household.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.mappers.DeviceMapper;
 import be.duft.easier_household.scheduler.AutomationScheduler;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -44,7 +46,7 @@ public class DeviceService {
 
     @Transactional(readOnly = true)
     public List<DeviceResponse> findByRoomId(Long roomId) {
-        return deviceRepository.findByRoomId(roomId)
+        return deviceRepository.findByAssignedRoom_Id(roomId)
                 .stream()
                 .map(deviceMapper::fromEntityToResponse)
                 .collect(Collectors.toList());
@@ -72,6 +74,7 @@ public class DeviceService {
     }
 
     public DeviceResponse changeState(Long id, DeviceRequest request){
+
         Device device = deviceRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));
         if (!device.isOnline()){
@@ -79,11 +82,18 @@ public class DeviceService {
         }
 
         DeviceState state = new DeviceState();
+        state.setChangedAt(LocalDateTime.now());
         state.setDevice(device);
-        state.setStatus(request.getStatus());
-        state.setValue(request.getValue());
+        if (request.getStatus() != null) {
+        state.setStatus(request.getStatus());} else {state.setStatus(device.getStatus());}
+        if (request.getValue() != null) {
+            state.setValue(request.getValue());
+        } else { state.setValue(device.getCurrentValue());}
+        if (request.getSource() != null) {
         state.setChangeSource(request.getSource());
+        }
         deviceStateRepository.save(state);
+
 
         device.setStatus(request.getStatus());
         device.setCurrentValue(request.getValue());

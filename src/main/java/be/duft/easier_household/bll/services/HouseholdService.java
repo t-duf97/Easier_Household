@@ -2,8 +2,12 @@ package be.duft.easier_household.bll.services;
 
 import be.duft.easier_household.dal.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dal.repositories.HouseholdRepository;
+import be.duft.easier_household.dal.repositories.RoomRepository;
+import be.duft.easier_household.dl.embeddable.HouseholdMemberId;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
+import be.duft.easier_household.dl.entities.Room;
+import be.duft.easier_household.dl.entities.User;
 import be.duft.easier_household.dl.enums.Role;
 import be.duft.easier_household.dtos.request.HouseholdRequest;
 import be.duft.easier_household.dtos.response.HouseholdResponse;
@@ -23,6 +27,7 @@ import java.util.stream.Collectors;
 public class HouseholdService {
 
     private final HouseholdRepository householdRepository;
+    private final RoomRepository roomRepository;
     private final HouseholdMemberRepository householdMemberRepository;
     private final HouseholdMapper householdMapper;
     private final UserService userService;
@@ -32,7 +37,7 @@ public class HouseholdService {
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
 
         Set<HouseholdMember> members = householdMemberRepository.findByHousehold(household);
-
+        List<Room> rooms = roomRepository.findAllByHouseholdId(household.getId());
         return householdMapper.fromEntityToResponse(household, members);
     }
 
@@ -44,17 +49,26 @@ public class HouseholdService {
     }
 
     public HouseholdResponse create(HouseholdRequest request, Long userId) {
+        User user = userService.findById(userId);
+
         Household household = householdMapper.fromRequesttoEntity(request);
+        household.setCreatedBy(user);
+
+        // 1. Sauvegarder le household EN PREMIER pour qu'il ait un id
+        Household savedHousehold = householdRepository.save(household);
+
+        HouseholdMemberId memberId = new HouseholdMemberId(userId, savedHousehold.getId());
 
         HouseholdMember householdMember = new HouseholdMember();
-        householdMember.setHousehold(household);
+        householdMember.setHouseholdMemberId(memberId);
+        householdMember.setHousehold(savedHousehold);
+        householdMember.setUser(user);
         householdMember.setRole(Role.OWNER);
-        householdMember.setUser(userService.findById(userId));
         householdMember.setJoinedAt(LocalDateTime.now());
 
         householdMemberRepository.save(householdMember);
-        householdRepository.save(household);
-        return householdMapper.fromEntityToResponse(household);
+
+        return householdMapper.fromEntityToResponse(savedHousehold);
     }
 
     public HouseholdResponse update(HouseholdRequest request, Long userId, Long id) {

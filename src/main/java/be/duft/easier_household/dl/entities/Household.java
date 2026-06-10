@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,14 +25,16 @@ public class Household extends BaseEntity {
     @Convert(converter = ZoneIdConverter.class)
     private ZoneId timeZone;
 
+    @Column
+    @Getter @Setter
+    private String address;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn
     @Getter @Setter
     private User createdBy;
 
-    @Column(name = "address")
-    @Getter @Setter
-    private String address;
+
 
 
 }

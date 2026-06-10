@@ -48,7 +48,7 @@ public interface AutomationRepository extends BaseRepository<Automation, Long> {
                 WHERE a.isEnabled = true
                 AND t.triggerType = 'DEVICE_STATE_CHANGE'
                 AND t.device.id = :deviceId
-                AND t.expectedStatus =: status
+                AND t.expectedStatus =:status
 """)
     List<Automation> findEnabledAutomationsByDeviceTrigger(
             @Param("deviceId") Long deviceId,

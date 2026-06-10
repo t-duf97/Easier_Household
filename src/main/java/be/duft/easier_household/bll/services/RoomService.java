@@ -45,11 +45,10 @@ public class RoomService {
     @Transactional(readOnly = true)
     public List<RoomResponse> findAllByHouseholdId(Long householdId, Long userId) {
 
-        checkMembership(householdId, userId);
-
-        return roomRepository.findAll()
+        checkMembership(userId, householdId);
+        return roomRepository.findAllByHouseholdId(householdId)
                 .stream()
-                .map(room -> roomMapper.FromEntityToResponse(roomRepository.findByHouseholdId(householdId)))
+                .map(roomMapper::FromEntityToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -88,7 +87,7 @@ public class RoomService {
 
     private void checkMembership(Long userId, Long householdId) {
         HouseholdMember member = householdMemberRepository.findByHouseholdIdAndUserId(householdId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("HouseholdMember not found with id" + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("HouseholdMember not found with id " + userId));
 
         if (!(member.getHousehold().getId().equals(householdId))) {
             throw new UnauthorizedAccessException("You are not a member of this household.");

@@ -45,7 +45,7 @@ public class Automation extends BaseEntity {
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="household_id", updatable = false, insertable = false)
+    @JoinColumn(name="household_id")
     @Getter @Setter
     private Household household;
 

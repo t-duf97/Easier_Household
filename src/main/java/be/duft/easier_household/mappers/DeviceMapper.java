@@ -22,6 +22,14 @@ public class DeviceMapper {
         response.setDeviceType(device.getDeviceType());
         response.setDeviceStatus(device.getStatus());
         response.setCurrentValue(device.getCurrentValue());
+        // Ajouter les infos dénormalisées
+        if (device.getAssignedRoom() != null) {
+            response.setRoomId(device.getAssignedRoom().getId());
+            response.setRoomName(device.getAssignedRoom().getName());
+            if (device.getAssignedRoom().getHousehold() != null) {
+                response.setHouseholdName(device.getAssignedRoom().getHousehold().getName());
+            }
+        }
         return response;
     }
 
@@ -47,6 +55,7 @@ public class DeviceMapper {
     }
 
     public DeviceStateResponse toStateResponse(DeviceState state) {
+
         DeviceStateResponse response = new DeviceStateResponse();
         response.setId(state.getId());
         response.setDeviceId(state.getDevice().getId());

@@ -35,10 +35,6 @@ public class DeviceState extends BaseEntity {
     @Column(name="user_id", insertable = false, updatable = false)
     private Long changedBy;
 
-    // A voir ce que ça donne. Je ne sais pas si ma jointure est bien faite sur la table USer
-    // A voir aussi si à la suppression d'un user l'historique ne part pas en cacahuète
-    // yeehaw
-
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id")

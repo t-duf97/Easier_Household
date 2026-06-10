@@ -16,8 +16,9 @@ public class HouseholdResponse {
     private String timeZone;
     private Long id;
     private String name;
-    private User createdBy;
+    private String createdByName;
     private LocalDateTime createdAt;
-    private Set<HouseholdMember> members = new HashSet<>();
+    private int memberCount;;
     private String address;
+    private int roomCount;
 }

@@ -39,9 +39,6 @@ public class AutomationAction extends BaseEntity {
     @Column(nullable = true, columnDefinition = "INTEGER DEFAULT 0")
     private int delayInSeconds;
 
-    @Getter @Setter
-    @Column(name = "device_id", insertable = false, updatable = false)
-    private Long deviceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="automation_id", nullable = false)

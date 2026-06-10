@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/households")
-public class HouseholdController {
+public class HouseholdController extends BaseController {
     private final HouseholdService householdService;
 
     @GetMapping("/{id}")
@@ -22,29 +22,28 @@ public class HouseholdController {
         return ResponseEntity.ok(householdService.findById(id));
     }
 
-    @GetMapping("/display/{id}")
-    public ResponseEntity<List<HouseholdResponse>> getAllHouseholds(@PathVariable Long id) {
-        return ResponseEntity.ok(householdService.findAllByUserId(id));
+    @GetMapping()
+    public ResponseEntity<List<HouseholdResponse>> getAllHouseholds() {
+        return ResponseEntity.ok(householdService.findAllByUserId(getCurrentUserId()));
     }
 
     // POST /households/create --> Create new household
     @PostMapping("/create")
-    public ResponseEntity<HouseholdResponse> createHousehold(@Valid @RequestBody HouseholdRequest request, Long userId) {
-        HouseholdResponse response = householdService.create(request, userId);
+    public ResponseEntity<HouseholdResponse> createHousehold(@Valid @RequestBody HouseholdRequest request) {
+        HouseholdResponse response = householdService.create(request, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<HouseholdResponse> updateHousehold(@Valid @RequestBody HouseholdRequest request,
-                                                             Long userId,
                                                              @PathVariable Long id) {
-        HouseholdResponse response = householdService.update(request, userId, id);
+        HouseholdResponse response = householdService.update(request, getCurrentUserId(), id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
     @DeleteMapping("/{id}/delete")
-    public ResponseEntity<HouseholdResponse> deleteHousehold(@PathVariable Long id, Long userId) {
+    public ResponseEntity<HouseholdResponse> deleteHousehold(@PathVariable Long id) {
 
-        householdService.delete(id, userId);
+        householdService.delete(id, getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -47,6 +47,15 @@ public class AutomationController extends BaseController {
         return ResponseEntity.status(HttpStatus.OK).body(automation);
     }
 
+    @PutMapping("/automations/{id}")
+    public ResponseEntity<AutomationResponse> updateAutomation(
+            @PathVariable Long id,
+            @Valid @RequestBody AutomationRequest request
+    ) {
+        AutomationResponse automation = automationService.update(id, request, getCurrentUserId());
+        return ResponseEntity.ok(automation);
+    }
+
     @DeleteMapping("/automations/{id}")
     public ResponseEntity<AutomationResponse> deleteAutomation(@PathVariable Long id){
         automationService.delete(id, getCurrentUserId());

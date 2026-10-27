@@ -6,7 +6,10 @@ import be.duft.easier_household.api.dtos.request.AutomationRequest;
 import be.duft.easier_household.api.dtos.response.AutomationResponse;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
+import be.duft.easier_household.bll.mappers.AutomationActionMapper;
+import be.duft.easier_household.bll.mappers.AutomationConditionMapper;
 import be.duft.easier_household.bll.mappers.AutomationMapper;
+import be.duft.easier_household.bll.mappers.AutomationTriggerMapper;
 import be.duft.easier_household.dl.repositories.AutomationRepository;
 import be.duft.easier_household.dl.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dl.repositories.HouseholdRepository;
@@ -28,6 +31,10 @@ public class AutomationService {
     private final HouseholdMemberRepository householdMemberRepository;
     private final UserRepository userRepository;
     private final AutomationMapper automationMapper;
+
+    private final AutomationTriggerMapper automationTriggerMapper;
+    private final AutomationConditionMapper automationConditionMapper;
+    private final AutomationActionMapper automationActionMapper;
 
     public AutomationResponse create(Long householdId, AutomationRequest request, Long userId){
         Household household = householdRepository.findById(householdId)
@@ -73,6 +80,44 @@ public class AutomationService {
         automation.setEnabled(!automation.isEnabled());
         return automationMapper.fromEntityToResponse(automationRepository.save(automation));
     }
+
+    public AutomationResponse update(Long id, AutomationRequest request, Long userId) {
+        Automation automation = getAutomationOrThrow(id);
+        checkMembership(automation.getHousehold().getId(), userId);
+
+        automation.setName(request.getName());
+        automation.setDescription(request.getDescription());
+        automation.setLogic(request.getLogic() != null ? request.getLogic() : automation.getLogic());
+
+        automation.getTriggers().clear();
+        automation.getConditions().clear();
+        automation.getActions().clear();
+
+        if (request.getTriggers() != null) {
+            request.getTriggers().forEach(t -> {
+                AutomationTrigger trigger = automationTriggerMapper.fromRequestToEntity(t);
+                trigger.setAutomation(automation);
+                automation.getTriggers().add(trigger);
+            });
+        }
+        if (request.getConditions() != null) {
+            request.getConditions().forEach(c -> {
+                AutomationCondition condition = automationConditionMapper.fromRequestToEntity(c);
+                condition.setAutomation(automation);
+                automation.getConditions().add(condition);
+            });
+        }
+        if (request.getActions() != null) {
+            request.getActions().forEach(a -> {
+                AutomationAction action = automationActionMapper.fromRequestToEntity(a);
+                action.setAutomation(automation);
+                automation.getActions().add(action);
+            });
+        }
+
+        return automationMapper.fromEntityToResponse(automationRepository.save(automation));
+    }
+
 
     public void delete(Long id, Long userId) {
         Automation automation = getAutomationOrThrow(id);

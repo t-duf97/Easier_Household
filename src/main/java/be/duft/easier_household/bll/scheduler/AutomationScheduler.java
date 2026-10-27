@@ -6,6 +6,7 @@ import be.duft.easier_household.dl.repositories.DeviceStateRepository;
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.ChangeSource;
 import be.duft.easier_household.dl.enums.DeviceStatus;
+import be.duft.easier_household.domain.condition.SensorThresholdRule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +27,7 @@ public class AutomationScheduler {
     private final AutomationRepository automationRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceStateRepository deviceStateRepository;
+    private final SensorThresholdRule sensorThresholdRule;
 
 
     public void evaluateDeviceStateAutomations(Long deviceId, DeviceStatus newStatus) {
@@ -109,25 +111,9 @@ public class AutomationScheduler {
             }
 
             case SENSOR_VALUE -> {
-                if (condition.getDevice() == null || condition.getThresholdValue() == null) yield false;
-                Device device = deviceRepository.findById(condition.getDevice().getId())
-                        .orElse(null);
-                if (device == null || device.getCurrentValue() == null) yield false;
-                try {
-                    double currentVal = Double.parseDouble(device.getCurrentValue());
-                    double threshold = condition.getThresholdValue();
-                    yield switch (condition.getThresholdOperator()) {
-                        case GT -> currentVal > threshold;
-                        case GTE -> currentVal >= threshold;
-                        case LT -> currentVal < threshold;
-                        case LTE -> currentVal <= threshold;
-                        case EQ -> currentVal == threshold;
-                    };
-                } catch (NumberFormatException e) {
-                    log.warn("Cannot parse sensor value '{}' for device {}",
-                            device.getCurrentValue(), device.getId());
-                    yield false;
-                }
+                Long deviceId = condition.getDevice() == null ? null : condition.getDevice().getId();
+                yield sensorThresholdRule.isMet(
+                        deviceId, condition.getThresholdValue(), condition.getThresholdOperator());
             }
 
             case TIME_RANGE -> {

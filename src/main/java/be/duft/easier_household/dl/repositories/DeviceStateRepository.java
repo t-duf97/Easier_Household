@@ -13,4 +13,6 @@ public interface DeviceStateRepository extends BaseRepository<DeviceState, Long>
     public Page<DeviceState> findByDeviceIdOrderByChangedAtDesc(Long deviceId, Pageable pageable);
 
     public boolean existsByDeviceIdAndChangedAtAfter (Long deviceId, LocalDateTime changedAt);
+
+    public void deleteByDeviceId(Long deviceId);
 }

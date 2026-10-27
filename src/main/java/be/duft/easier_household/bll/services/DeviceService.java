@@ -62,16 +62,28 @@ public class DeviceService {
         return deviceMapper.fromEntityToResponse(device, roomId);
     }
 
-    public DeviceResponse update(Long id, DeviceRequest request){
+    public DeviceResponse update(Long id, DeviceRequest request) {
         Device device = deviceRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
 
-        deviceMapper.updateEntityFromRequest(request, device);
+        if (request.getName() != null) {
+            device.setName(request.getName());
+        }
+        if (request.getType() != null) {
+            device.setType(request.getType());
+        }
+
+        device.setUpdatedAt(LocalDateTime.now());
         return deviceMapper.fromEntityToResponse(deviceRepository.save(device));
     }
 
-    public void deleteDevice(Long id){
-        deviceRepository.deleteById(id);
+
+    public void deleteDevice(Long id) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
+
+        deviceStateRepository.deleteByDeviceId(id);
+        deviceRepository.delete(device);
     }
 
     public DeviceResponse changeState(Long id, DeviceStateRequest request){
@@ -96,8 +108,12 @@ public class DeviceService {
         deviceStateRepository.save(state);
 
 
-        device.setStatus(request.getStatus());
-        device.setCurrentValue(request.getValue());
+        if (request.getStatus() != null) {
+            device.setStatus(request.getStatus());
+        }
+        if (request.getValue() != null) {
+            device.setCurrentValue(request.getValue());
+        }
         device.setUpdatedAt(LocalDateTime.now());
         deviceRepository.save(device);
 

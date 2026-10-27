@@ -23,7 +23,7 @@ public class AutomationTrigger extends BaseEntity {
     @Getter @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private TriggerType triggerType;
+    private TriggerType type;
 
     @Getter @Setter
     @Column(nullable = true) // Uniquement utilisé si le trigger_type est TIME
@@ -37,7 +37,7 @@ public class AutomationTrigger extends BaseEntity {
 
     @Getter @Setter
     @Column
-    private DeviceStatus expectedStatus;
+    private DeviceStatus status;
     // Statut expected par le trigger (soit avant le déclenchement, soit après. A paramétrer selon le trigger)
 
     @Getter @Setter

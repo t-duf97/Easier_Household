@@ -1,7 +1,7 @@
 package be.duft.easier_household.bll.services;
 
 
-import be.duft.easier_household.dal.repositories.DeviceIntegrationRepository;
+import be.duft.easier_household.dl.repositories.DeviceIntegrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

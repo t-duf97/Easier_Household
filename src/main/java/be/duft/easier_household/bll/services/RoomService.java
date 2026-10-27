@@ -1,16 +1,16 @@
 package be.duft.easier_household.bll.services;
 
-import be.duft.easier_household.dal.repositories.HouseholdMemberRepository;
-import be.duft.easier_household.dal.repositories.HouseholdRepository;
-import be.duft.easier_household.dal.repositories.RoomRepository;
+import be.duft.easier_household.dl.repositories.HouseholdMemberRepository;
+import be.duft.easier_household.dl.repositories.HouseholdRepository;
+import be.duft.easier_household.dl.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.entities.Room;
-import be.duft.easier_household.dtos.request.RoomRequest;
-import be.duft.easier_household.dtos.response.RoomResponse;
-import be.duft.easier_household.exceptions.ResourceNotFoundException;
-import be.duft.easier_household.exceptions.UnauthorizedAccessException;
-import be.duft.easier_household.mappers.RoomMapper;
+import be.duft.easier_household.api.dtos.request.RoomRequest;
+import be.duft.easier_household.api.dtos.response.RoomResponse;
+import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
+import be.duft.easier_household.bll.mappers.RoomMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

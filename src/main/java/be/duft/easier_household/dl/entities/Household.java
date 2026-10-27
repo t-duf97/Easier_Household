@@ -1,14 +1,10 @@
 package be.duft.easier_household.dl.entities;
 
-import be.duft.easier_household.converter.ZoneIdConverter;
+import be.duft.easier_household.dl.converter.ZoneIdConverter;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Entity
 @NoArgsConstructor

@@ -21,7 +21,7 @@ public class Device extends BaseEntity {
     @Getter @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private DeviceType deviceType;
+    private DeviceType type;
 
     @Getter @Setter
     @Column(nullable = true)

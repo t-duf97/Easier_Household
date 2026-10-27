@@ -1,9 +1,10 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.DeviceService;
-import be.duft.easier_household.dtos.request.DeviceRequest;
-import be.duft.easier_household.dtos.response.DeviceResponse;
-import be.duft.easier_household.dtos.response.DeviceStateResponse;
+import be.duft.easier_household.api.dtos.request.DeviceRequest;
+import be.duft.easier_household.api.dtos.request.DeviceStateRequest;
+import be.duft.easier_household.api.dtos.response.DeviceResponse;
+import be.duft.easier_household.api.dtos.response.DeviceStateResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,15 +32,13 @@ public class DeviceController extends BaseController {
     public ResponseEntity<DeviceResponse> getDevice(@PathVariable Long id) {
         return ResponseEntity.ok(deviceService.findById(id));
     }
-    /**
-     * Pour récupérer tous les devices d'une room.
-     * **/
+
     @GetMapping("/rooms/{roomId}/devices")
     public ResponseEntity<List<DeviceResponse>> getDevices(@PathVariable Long roomId) {
         return ResponseEntity.ok(deviceService.findByRoomId(roomId));
     }
 
-    @PostMapping("/rooms/{roomId}/create")
+    @PostMapping("/rooms/{roomId}/devices")
     public ResponseEntity<DeviceResponse> createDevice(
             @Valid
             @RequestBody DeviceRequest request,
@@ -48,7 +47,7 @@ public class DeviceController extends BaseController {
           return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/update/{id}")
+    @PatchMapping("/devices/{id}")
     public ResponseEntity<DeviceResponse> updateDevice(
             @PathVariable Long id,
             @Valid @RequestBody DeviceRequest request) {
@@ -64,8 +63,7 @@ public class DeviceController extends BaseController {
     @PatchMapping("/devices/{id}/state")
     public ResponseEntity<DeviceResponse> updateDeviceState(
             @PathVariable Long id,
-            @Valid @RequestBody DeviceRequest request){
-        log.info("request: {}", request.toString());
+            @Valid @RequestBody DeviceStateRequest request){
         return ResponseEntity.ok(deviceService.changeState(id, request));
     }
 

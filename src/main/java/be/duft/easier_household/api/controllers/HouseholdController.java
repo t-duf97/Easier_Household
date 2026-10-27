@@ -1,8 +1,8 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.HouseholdService;
-import be.duft.easier_household.dtos.request.HouseholdRequest;
-import be.duft.easier_household.dtos.response.HouseholdResponse;
+import be.duft.easier_household.api.dtos.request.HouseholdRequest;
+import be.duft.easier_household.api.dtos.response.HouseholdResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,8 +27,7 @@ public class HouseholdController extends BaseController {
         return ResponseEntity.ok(householdService.findAllByUserId(getCurrentUserId()));
     }
 
-    // POST /households/create --> Create new household
-    @PostMapping("/create")
+    @PostMapping()
     public ResponseEntity<HouseholdResponse> createHousehold(@Valid @RequestBody HouseholdRequest request) {
         HouseholdResponse response = householdService.create(request, getCurrentUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -40,7 +39,7 @@ public class HouseholdController extends BaseController {
         HouseholdResponse response = householdService.update(request, getCurrentUserId(), id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<HouseholdResponse> deleteHousehold(@PathVariable Long id) {
 
         householdService.delete(id, getCurrentUserId());

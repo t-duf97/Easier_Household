@@ -1,14 +1,12 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.AutomationService;
-import be.duft.easier_household.dl.entities.User;
-import be.duft.easier_household.dtos.request.AutomationRequest;
-import be.duft.easier_household.dtos.response.AutomationResponse;
+import be.duft.easier_household.api.dtos.request.AutomationRequest;
+import be.duft.easier_household.api.dtos.response.AutomationResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 

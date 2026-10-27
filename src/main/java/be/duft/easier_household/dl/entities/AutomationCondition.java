@@ -19,12 +19,12 @@ public class AutomationCondition extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Getter @Setter
     @Column(nullable = false)
-    private ConditionType conditionType;
+    private ConditionType type;
 
     @Enumerated(EnumType.STRING)
     @Getter @Setter
     @Column(nullable = false)
-    private DeviceStatus expectedDeviceStatus;
+    private DeviceStatus status;
 
     @Getter @Setter
     @Column(nullable = true)

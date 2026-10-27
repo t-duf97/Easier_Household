@@ -12,8 +12,8 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"household","user"}, callSuper = false)
-@ToString(exclude = {"household","user"})
+@EqualsAndHashCode(exclude = {"household"}, callSuper = false)
+@ToString(exclude = {"household"})
 public class Automation extends BaseEntity {
 
 
@@ -28,9 +28,8 @@ public class Automation extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Getter @Setter
-    private ConditionLogic conditionLogic;
+    private ConditionLogic logic;
 
-    // Pas sur pour le VARCHAR DEFAULT
 
     @Getter @Setter
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")

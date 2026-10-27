@@ -21,11 +21,11 @@ public class AutomationAction extends BaseEntity {
     @Getter @Setter
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private ActionType actionType;
+    private ActionType type;
 
     @Getter @Setter
     @Enumerated(EnumType.STRING)
-    private DeviceStatus targetStatus;
+    private DeviceStatus status;
 
     @Getter @Setter
     @Column(nullable = true)

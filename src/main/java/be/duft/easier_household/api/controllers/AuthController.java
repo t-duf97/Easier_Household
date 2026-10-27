@@ -1,9 +1,9 @@
 package be.duft.easier_household.api.controllers;
 
 import be.duft.easier_household.bll.services.AuthService;
-import be.duft.easier_household.dtos.request.LoginRequest;
-import be.duft.easier_household.dtos.request.RegisterRequest;
-import be.duft.easier_household.dtos.response.AuthResponse;
+import be.duft.easier_household.api.dtos.request.LoginRequest;
+import be.duft.easier_household.api.dtos.request.RegisterRequest;
+import be.duft.easier_household.api.dtos.response.AuthResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

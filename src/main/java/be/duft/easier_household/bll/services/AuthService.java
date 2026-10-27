@@ -1,15 +1,14 @@
 package be.duft.easier_household.bll.services;
 
-import be.duft.easier_household.dal.repositories.UserRepository;
+import be.duft.easier_household.dl.repositories.UserRepository;
 import be.duft.easier_household.dl.entities.User;
-import be.duft.easier_household.dtos.request.LoginRequest;
-import be.duft.easier_household.dtos.request.RegisterRequest;
-import be.duft.easier_household.dtos.response.AuthResponse;
-import be.duft.easier_household.exceptions.EmailAlreadyUsedException;
-import be.duft.easier_household.exceptions.ResourceNotFoundException;
-import be.duft.easier_household.exceptions.UnauthorizedAccessException;
-import be.duft.easier_household.security.JwtService;
-import jdk.jfr.Registered;
+import be.duft.easier_household.api.dtos.request.LoginRequest;
+import be.duft.easier_household.api.dtos.request.RegisterRequest;
+import be.duft.easier_household.api.dtos.response.AuthResponse;
+import be.duft.easier_household.api.exceptions.EmailAlreadyUsedException;
+import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
+import be.duft.easier_household.api.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,6 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setCreatedAt(LocalDateTime.now());
-        user.setUsername(request.getUserName());
 
         User saved = userRepository.save(user);
 
@@ -60,7 +58,6 @@ public class AuthService {
                 .email(user.getEmail())
                 .tokenType("Bearer")
                 .firstName(user.getFirstName())
-                .userName(user.getUsername())
                 .lastName(user.getLastName())
                 .build();
     }

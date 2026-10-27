@@ -1,19 +1,20 @@
 package be.duft.easier_household.bll.services;
 
 
-import be.duft.easier_household.dal.repositories.DeviceRepository;
-import be.duft.easier_household.dal.repositories.DeviceStateRepository;
-import be.duft.easier_household.dal.repositories.RoomRepository;
+import be.duft.easier_household.dl.repositories.DeviceRepository;
+import be.duft.easier_household.dl.repositories.DeviceStateRepository;
+import be.duft.easier_household.dl.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
 import be.duft.easier_household.dl.entities.Room;
-import be.duft.easier_household.dtos.request.DeviceRequest;
-import be.duft.easier_household.dtos.response.DeviceResponse;
-import be.duft.easier_household.dtos.response.DeviceStateResponse;
-import be.duft.easier_household.exceptions.DeviceUnavailableException;
-import be.duft.easier_household.exceptions.ResourceNotFoundException;
-import be.duft.easier_household.mappers.DeviceMapper;
-import be.duft.easier_household.scheduler.AutomationScheduler;
+import be.duft.easier_household.api.dtos.request.DeviceRequest;
+import be.duft.easier_household.api.dtos.request.DeviceStateRequest;
+import be.duft.easier_household.api.dtos.response.DeviceResponse;
+import be.duft.easier_household.api.dtos.response.DeviceStateResponse;
+import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
+import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.bll.mappers.DeviceMapper;
+import be.duft.easier_household.bll.scheduler.AutomationScheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -73,7 +74,7 @@ public class DeviceService {
         deviceRepository.deleteById(id);
     }
 
-    public DeviceResponse changeState(Long id, DeviceRequest request){
+    public DeviceResponse changeState(Long id, DeviceStateRequest request){
 
         Device device = deviceRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));

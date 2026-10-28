@@ -5,9 +5,8 @@ import be.duft.easier_household.dl.entities.User;
 import be.duft.easier_household.api.dtos.request.LoginRequest;
 import be.duft.easier_household.api.dtos.request.RegisterRequest;
 import be.duft.easier_household.api.dtos.response.AuthResponse;
-import be.duft.easier_household.api.exceptions.EmailAlreadyUsedException;
-import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
-import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
+import be.duft.easier_household.bll.exceptions.InvalidCredentialsException;
+import be.duft.easier_household.bll.exceptions.ResourceAlreadyExistsException;
 import be.duft.easier_household.api.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,11 +21,12 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private volatile String dummyHash;
 
     public AuthResponse register(RegisterRequest request) {
         // Vérifier que l'email est pas déjà utilisé
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyUsedException("Email already in use: " + request.getEmail());
+            throw new ResourceAlreadyExistsException("Email already in use: " + request.getEmail());
         }
         User user = new User();
         user.setEmail(request.getEmail());
@@ -40,14 +40,25 @@ public class AuthService {
         return buildAuthResponse(saved);
     }
 
+    /**
+     * @throws InvalidCredentialsException si l'email est inconnu ou le mot de passe faux (même réponse, et un
+     *         hachage BCrypt est calculé dans les deux cas pour que le temps de réponse ne trahisse pas l'email)
+     */
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        String hash = user != null ? user.getPasswordHash() : dummyHash();
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new UnauthorizedAccessException("Wrong password");
+        if (!passwordEncoder.matches(request.getPassword(), hash) || user == null) {
+            throw new InvalidCredentialsException();
         }
         return buildAuthResponse(user);
+    }
+
+    private String dummyHash() {
+        if (dummyHash == null) {
+            dummyHash = passwordEncoder.encode("not-a-real-password");
+        }
+        return dummyHash;
     }
 
     private AuthResponse buildAuthResponse(User user) {

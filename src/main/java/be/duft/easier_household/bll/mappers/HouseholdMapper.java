@@ -14,20 +14,6 @@ import java.util.Set;
 @Component
 public class HouseholdMapper {
 
-    public HouseholdResponse fromEntityToResponse(Household household) {
-        HouseholdResponse householdResponse = new HouseholdResponse();
-        householdResponse.setId(household.getId());
-        householdResponse.setName(household.getName());
-        householdResponse.setCreatedAt(household.getCreatedAt());
-        householdResponse.setCreatedByName(
-                household.getCreatedBy().getFirstName() + " " + household.getCreatedBy().getLastName()
-        );
-        householdResponse.setTimeZone(household.getTimeZone().getId());
-        householdResponse.setAddress(household.getAddress());
-        householdResponse.setLatitude(household.getLatitude());
-        householdResponse.setLongitude(household.getLongitude());
-        return householdResponse;
-    }
     public HouseholdResponse fromEntityToResponse(Household household, Set<HouseholdMember> members, List<Room> rooms) {
         HouseholdResponse householdResponse = new HouseholdResponse();
         householdResponse.setId(household.getId());

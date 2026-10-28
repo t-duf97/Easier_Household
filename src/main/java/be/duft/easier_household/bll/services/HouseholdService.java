@@ -23,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,6 +52,10 @@ public class HouseholdService {
         householdMemberRepository.findByHouseholdIdAndUserId(id, userId)
                 .orElseThrow(() -> new UnauthorizedAccessException("Not a member of this house!"));
 
+        return toResponse(household);
+    }
+
+    private HouseholdResponse toResponse(Household household) {
         Set<HouseholdMember> members = householdMemberRepository.findByHousehold(household);
         List<Room> rooms = roomRepository.findAllByHouseholdId(household.getId());
         return householdMapper.fromEntityToResponse(household, members, rooms);
@@ -59,12 +65,19 @@ public class HouseholdService {
     public List<HouseholdResponse> findAllByUserId(Long userId) {
         return householdMemberRepository.findByUserId(userId)
                 .stream()
-                .map(member -> householdMapper.fromEntityToResponse(member.getHousehold()))
+                .map(member -> toResponse(member.getHousehold()))
                 .collect(Collectors.toList());
     }
 
     public HouseholdResponse create(HouseholdRequest request, Long userId) {
         User user = userService.findById(userId);
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new InvalidRequestException("name is required");
+        }
+        if (request.getTimeZone() == null) {
+            throw new InvalidRequestException("timeZone is required");
+        }
+        checkTimeZone(request);
         checkCoordinates(request);
 
         Household household = householdMapper.fromRequesttoEntity(request);
@@ -84,7 +97,7 @@ public class HouseholdService {
 
         householdMemberRepository.save(householdMember);
 
-        return householdMapper.fromEntityToResponse(savedHousehold);
+        return toResponse(savedHousehold);
     }
 
     public HouseholdResponse update(HouseholdRequest request, Long userId, Long id) {
@@ -92,10 +105,11 @@ public class HouseholdService {
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
 
         checkOwnership(household, userId);
+        checkTimeZone(request);
         checkCoordinates(request);
 
         householdMapper.updateEntityFromRequest(request, household);
-        return householdMapper.fromEntityToResponse(householdRepository.save(household));
+        return toResponse(householdRepository.save(household));
 
     }
 
@@ -123,6 +137,17 @@ public class HouseholdService {
     /**
      * Latitude et longitude vont ensemble : l'une sans l'autre ne permet pas de situer le foyer.
      */
+    private void checkTimeZone(HouseholdRequest request) {
+        if (request.getTimeZone() == null) {
+            return;
+        }
+        try {
+            ZoneId.of(request.getTimeZone());
+        } catch (DateTimeException e) {
+            throw new InvalidRequestException("Unknown timeZone: " + request.getTimeZone());
+        }
+    }
+
     private void checkCoordinates(HouseholdRequest request) {
         if ((request.getLatitude() == null) != (request.getLongitude() == null)) {
             throw new InvalidRequestException("latitude and longitude must be provided together");

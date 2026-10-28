@@ -13,10 +13,12 @@ import be.duft.easier_household.api.dtos.response.DeviceResponse;
 import be.duft.easier_household.api.dtos.response.DeviceStateResponse;
 import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
 import be.duft.easier_household.bll.mappers.DeviceMapper;
-import be.duft.easier_household.bll.scheduler.AutomationScheduler;
+import be.duft.easier_household.dl.enums.DeviceStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +38,7 @@ public class DeviceService {
     private final RoomRepository roomRepository;
     private final DeviceStateRepository deviceStateRepository;
     private final DeviceMapper deviceMapper;
-    private final AutomationScheduler automationScheduler;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public DeviceResponse findById(Long id) {
@@ -93,6 +95,7 @@ public class DeviceService {
         if (!device.isOnline()){
             throw new DeviceUnavailableException("Device is unavailable");
         }
+        DeviceStatus previousStatus = device.getStatus();
 
         DeviceState state = new DeviceState();
         state.setChangedAt(LocalDateTime.now());
@@ -117,7 +120,9 @@ public class DeviceService {
         device.setUpdatedAt(LocalDateTime.now());
         deviceRepository.save(device);
 
-        automationScheduler.evaluateDeviceStateAutomations(device.getId(), request.getStatus());
+        if (device.getStatus() != previousStatus) {
+            eventPublisher.publishEvent(new DeviceStatusChangedEvent(device.getId(), device.getStatus()));
+        }
 
         return deviceMapper.fromEntityToResponse(device);
 

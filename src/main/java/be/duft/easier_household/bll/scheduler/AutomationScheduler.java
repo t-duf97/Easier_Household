@@ -1,16 +1,20 @@
 package be.duft.easier_household.bll.scheduler;
 
+import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
 import be.duft.easier_household.dl.repositories.AutomationRepository;
 import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.repositories.DeviceStateRepository;
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.ChangeSource;
-import be.duft.easier_household.dl.enums.DeviceStatus;
 import be.duft.easier_household.domain.condition.SensorThresholdRule;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +24,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class AutomationScheduler {
 
@@ -28,20 +31,47 @@ public class AutomationScheduler {
     private final DeviceRepository deviceRepository;
     private final DeviceStateRepository deviceStateRepository;
     private final SensorThresholdRule sensorThresholdRule;
+    private final TransactionTemplate newTransaction;
 
+    public AutomationScheduler(AutomationRepository automationRepository,
+                               DeviceRepository deviceRepository,
+                               DeviceStateRepository deviceStateRepository,
+                               SensorThresholdRule sensorThresholdRule,
+                               PlatformTransactionManager transactionManager) {
+        this.automationRepository = automationRepository;
+        this.deviceRepository = deviceRepository;
+        this.deviceStateRepository = deviceStateRepository;
+        this.sensorThresholdRule = sensorThresholdRule;
+        this.newTransaction = new TransactionTemplate(transactionManager);
+        this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
-    public void evaluateDeviceStateAutomations(Long deviceId, DeviceStatus newStatus) {
-        List<Automation> automations = automationRepository
-                .findEnabledAutomationsByDeviceTrigger(deviceId, newStatus);
+    /**
+     * Déclenche les automatisations DEVICE_STATE_CHANGE une fois le changement d'état commité :
+     * une automatisation en échec ne peut plus annuler le changement qui l'a déclenchée.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onDeviceStatusChanged(DeviceStatusChangedEvent event) {
+        List<Long> automationIds = newTransaction.execute(status -> automationRepository
+                .findEnabledAutomationsByDeviceTrigger(event.deviceId(), event.newStatus())
+                .stream().map(Automation::getId).toList());
 
         log.info("Device '{}' changed to {} - found {} reactive automation(s)",
-                deviceId, newStatus,  automations.size());
+                event.deviceId(), event.newStatus(), automationIds.size());
 
-        for (Automation automation : automations) {
+        runEachInOwnTransaction(automationIds);
+    }
+
+    /**
+     * Chaque automatisation tourne dans sa propre transaction : l'échec de l'une n'affecte pas les autres.
+     */
+    private void runEachInOwnTransaction(List<Long> automationIds) {
+        for (Long id : automationIds) {
             try {
-                evaluateAndExecute(automation);
+                newTransaction.executeWithoutResult(status ->
+                        automationRepository.findById(id).ifPresent(this::evaluateAndExecute));
             } catch (Exception e) {
-                log.error("Error in reactive automation '{}' : {}", automation.getName(), e.getMessage(), e);
+                log.error("Error in automation id={} : {}", id, e.getMessage(), e);
             }
         }
     }

@@ -35,8 +35,6 @@ public class AutomationActionMapper {
     public AutomationAction fromRequestToEntity(AutomationActionRequest request){
         AutomationAction action = new AutomationAction();
 
-        // Champs optionnels dans la requête (Integer) mais primitifs dans l'entité (int) :
-        // on applique les mêmes valeurs par défaut que les colonnes au lieu de laisser l'unboxing planter.
         action.setExecutionOrder(request.getExecutionOrder() != null ? request.getExecutionOrder() : 1);
         action.setType(request.getType());
         action.setTargetValue(request.getTargetValue());

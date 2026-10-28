@@ -1,6 +1,3 @@
-# Modèle de configuration. Copier en application.yaml (gitignoré) :
-#   cp src/main/resources/application.example.yaml src/main/resources/application.yaml
-# Les secrets viennent des variables d'environnement, jamais en dur dans un fichier versionné.
 spring:
   application:
     name: Easier_Household

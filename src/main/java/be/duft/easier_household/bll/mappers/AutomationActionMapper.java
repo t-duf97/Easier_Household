@@ -20,15 +20,13 @@ public class AutomationActionMapper {
         response.setExecutionOrder(action.getExecutionOrder());
         response.setType(action.getType());
         response.setTargetValue(action.getTargetValue());
-        response.setDeviceId(action.getDevice().getId());
-        response.setStatus(action.getDevice().getStatus());
+        response.setStatus(action.getStatus());
         response.setNotificationMsg(action.getNotificationMsg());
         response.setDelayInSeconds(action.getDelayInSeconds());
 
-
+        // Device optionnel : SEND_NOTIFICATION et WAIT n'en ont pas.
         if (action.getDevice() != null) {
             response.setDeviceId(action.getDevice().getId());
-            response.setStatus(action.getDevice().getStatus());
         }
         return response;
 
@@ -37,11 +35,13 @@ public class AutomationActionMapper {
     public AutomationAction fromRequestToEntity(AutomationActionRequest request){
         AutomationAction action = new AutomationAction();
 
-        action.setExecutionOrder(request.getExecutionOrder());
+        // Champs optionnels dans la requête (Integer) mais primitifs dans l'entité (int) :
+        // on applique les mêmes valeurs par défaut que les colonnes au lieu de laisser l'unboxing planter.
+        action.setExecutionOrder(request.getExecutionOrder() != null ? request.getExecutionOrder() : 1);
         action.setType(request.getType());
         action.setTargetValue(request.getTargetValue());
         action.setNotificationMsg(request.getNotificationMsg());
-        action.setDelayInSeconds(request.getDelayInSeconds());
+        action.setDelayInSeconds(request.getDelayInSeconds() != null ? request.getDelayInSeconds() : 0);
         action.setStatus(request.getStatus());
 
         if (request.getDeviceId() != null) {

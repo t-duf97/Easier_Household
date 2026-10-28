@@ -1,7 +1,9 @@
 package be.duft.easier_household.bll.scheduler;
 
 import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
+import be.duft.easier_household.bll.events.DeviceValueChangedEvent;
 import be.duft.easier_household.dl.repositories.AutomationRepository;
+import be.duft.easier_household.dl.repositories.AutomationTriggerRepository;
 import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.repositories.DeviceStateRepository;
 import be.duft.easier_household.dl.entities.*;
@@ -29,17 +31,20 @@ import java.util.stream.Collectors;
 public class AutomationScheduler {
 
     private final AutomationRepository automationRepository;
+    private final AutomationTriggerRepository automationTriggerRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceStateRepository deviceStateRepository;
     private final SensorThresholdRule sensorThresholdRule;
     private final TransactionTemplate newTransaction;
 
     public AutomationScheduler(AutomationRepository automationRepository,
+                               AutomationTriggerRepository automationTriggerRepository,
                                DeviceRepository deviceRepository,
                                DeviceStateRepository deviceStateRepository,
                                SensorThresholdRule sensorThresholdRule,
                                PlatformTransactionManager transactionManager) {
         this.automationRepository = automationRepository;
+        this.automationTriggerRepository = automationTriggerRepository;
         this.deviceRepository = deviceRepository;
         this.deviceStateRepository = deviceStateRepository;
         this.sensorThresholdRule = sensorThresholdRule;
@@ -59,6 +64,25 @@ public class AutomationScheduler {
 
         log.info("Device '{}' changed to {} - found {} reactive automation(s)",
                 event.deviceId(), event.newStatus(), automationIds.size());
+
+        runEachInOwnTransaction(automationIds);
+    }
+
+    /**
+     * Déclenche les automatisations SENSOR_THRESHOLD dont le seuil vient d'être franchi par la nouvelle valeur.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onDeviceValueChanged(DeviceValueChangedEvent event) {
+        List<Long> automationIds = newTransaction.execute(status -> automationTriggerRepository
+                .findEnabledSensorThresholdTriggers(event.deviceId()).stream()
+                .filter(t -> t.getThresholdValue() != null && SensorThresholdRule.crosses(
+                        event.previousValue(), event.newValue(), t.getThresholdValue(), t.getThresholdOperator()))
+                .map(t -> t.getAutomation().getId())
+                .distinct()
+                .toList());
+
+        log.info("Device '{}' value {} -> {} - {} threshold automation(s) triggered",
+                event.deviceId(), event.previousValue(), event.newValue(), automationIds.size());
 
         runEachInOwnTransaction(automationIds);
     }

@@ -163,6 +163,13 @@ public class AutomationService {
                     throw new InvalidRequestException("TIME trigger requires timeValue");
                 }
             }
+            case SENSOR_THRESHOLD -> {
+                if (trigger.getDeviceId() == null || trigger.getThresholdValue() == null
+                        || trigger.getThresholdOperator() == null) {
+                    throw new InvalidRequestException(
+                            "SENSOR_THRESHOLD trigger requires deviceId, thresholdValue and thresholdOperator");
+                }
+            }
             default -> throw new InvalidRequestException(trigger.getType() + " triggers are not supported yet");
         }
     }

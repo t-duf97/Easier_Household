@@ -50,4 +50,19 @@ class SensorThresholdRuleTest {
 
         assertFalse(rule.isMet(1L, 24.0, ThresholdOperator.GT));
     }
+
+    @Test
+    @DisplayName("24.8 -> 25.2 franchit > 25 ; 25.2 -> 25.6 ne le franchit pas une seconde fois")
+    void crossesOnlyWhenEnteringTheThreshold() {
+        assertTrue(SensorThresholdRule.crosses("24.8", "25.2", 25.0, ThresholdOperator.GT));
+        assertFalse(SensorThresholdRule.crosses("25.2", "25.6", 25.0, ThresholdOperator.GT));
+        assertFalse(SensorThresholdRule.crosses("25.2", "24.9", 25.0, ThresholdOperator.GT));
+    }
+
+    @Test
+    @DisplayName("Première valeur connue au-delà du seuil -> franchissement")
+    void firstValueBeyondThresholdCrosses() {
+        assertTrue(SensorThresholdRule.crosses(null, "17.5", 18.0, ThresholdOperator.LT));
+        assertTrue(SensorThresholdRule.crosses("hors service", "17.5", 18.0, ThresholdOperator.LT));
+    }
 }

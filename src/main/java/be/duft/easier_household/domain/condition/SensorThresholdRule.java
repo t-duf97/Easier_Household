@@ -26,23 +26,37 @@ public class SensorThresholdRule {
         }
 
         Optional<SensorState> state = statePort.stateOf(deviceId);
-        if (state.isEmpty() || state.get().currentValue() == null) {
+        return state.isPresent() && satisfies(state.get().currentValue(), threshold, operator);
+    }
+
+    /**
+     * Vrai si {@code value}, lue comme un nombre, respecte l'opérateur de seuil.
+     * Une valeur absente ou non numérique ne respecte jamais le seuil.
+     */
+    public static boolean satisfies(String value, double threshold, ThresholdOperator operator) {
+        if (value == null || operator == null) {
             return false;
         }
-
-        double currentVal;
+        double numeric;
         try {
-            currentVal = Double.parseDouble(state.get().currentValue());
+            numeric = Double.parseDouble(value);
         } catch (NumberFormatException e) {
             return false;
         }
-
         return switch (operator) {
-            case GT -> currentVal > threshold;
-            case GTE -> currentVal >= threshold;
-            case LT -> currentVal < threshold;
-            case LTE -> currentVal <= threshold;
-            case EQ -> currentVal == threshold;
+            case GT -> numeric > threshold;
+            case GTE -> numeric >= threshold;
+            case LT -> numeric < threshold;
+            case LTE -> numeric <= threshold;
+            case EQ -> numeric == threshold;
         };
+    }
+
+    /**
+     * Vrai au moment où le seuil est franchi : la nouvelle valeur le respecte et l'ancienne non
+     * (ou était absente). Rester au-delà du seuil ne déclenche pas une seconde fois.
+     */
+    public static boolean crosses(String previousValue, String newValue, double threshold, ThresholdOperator operator) {
+        return satisfies(newValue, threshold, operator) && !satisfies(previousValue, threshold, operator);
     }
 }

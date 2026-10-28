@@ -20,6 +20,7 @@ import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
+import be.duft.easier_household.bll.events.DeviceValueChangedEvent;
 import be.duft.easier_household.bll.mappers.DeviceMapper;
 import be.duft.easier_household.dl.enums.DeviceStatus;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -119,6 +121,7 @@ public class DeviceService {
             throw new DeviceUnavailableException("Device is unavailable");
         }
         DeviceStatus previousStatus = device.getStatus();
+        String previousValue = device.getCurrentValue();
 
         DeviceState state = new DeviceState();
         state.setChangedAt(LocalDateTime.now());
@@ -146,6 +149,9 @@ public class DeviceService {
 
         if (device.getStatus() != previousStatus) {
             eventPublisher.publishEvent(new DeviceStatusChangedEvent(device.getId(), device.getStatus()));
+        }
+        if (!Objects.equals(device.getCurrentValue(), previousValue)) {
+            eventPublisher.publishEvent(new DeviceValueChangedEvent(device.getId(), previousValue, device.getCurrentValue()));
         }
 
         return deviceMapper.fromEntityToResponse(device);

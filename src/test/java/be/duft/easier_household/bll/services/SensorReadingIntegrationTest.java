@@ -33,6 +33,7 @@ class SensorReadingIntegrationTest {
     @Autowired private DeviceStateRepository deviceStateRepository;
     @Autowired private AutomationRepository automationRepository;
 
+    private Household household;
     private Device thermometer;
     private Device motionSensor;
     private Device fan;
@@ -46,7 +47,7 @@ class SensorReadingIntegrationTest {
         user.setPasswordHash("not-a-real-hash");
         user = userRepository.save(user);
 
-        Household household = new Household();
+        household = new Household();
         household.setName("Maison capteurs");
         household.setTimeZone(ZoneId.of("Europe/Brussels"));
         household.setCreatedBy(user);
@@ -132,6 +133,45 @@ class SensorReadingIntegrationTest {
     }
 
     @Test
+    void sensorThresholdTrigger_firesOnlyWhenTheThresholdIsCrossed() {
+        Automation hotAlert = new Automation();
+        hotAlert.setName("> 25 °C -> ventilateur");
+        hotAlert.setLogic(ConditionLogic.ALL);
+        hotAlert.setEnabled(true);
+        hotAlert.setCreatedBy(household.getCreatedBy());
+        hotAlert.setHousehold(household);
+        AutomationTrigger threshold = new AutomationTrigger();
+        threshold.setAutomation(hotAlert);
+        threshold.setType(TriggerType.SENSOR_THRESHOLD);
+        threshold.setDevice(thermometer);
+        threshold.setThresholdValue(25.0);
+        threshold.setThresholdOperator(ThresholdOperator.GT);
+        hotAlert.getTriggers().add(threshold);
+        AutomationAction fanOn = new AutomationAction();
+        fanOn.setAutomation(hotAlert);
+        fanOn.setType(ActionType.SET_DEVICE_STATUS);
+        fanOn.setDevice(fan);
+        fanOn.setStatus(DeviceStatus.ON);
+        fanOn.setExecutionOrder(1);
+        hotAlert.getActions().add(fanOn);
+        automationRepository.save(hotAlert);
+
+        sensorReadingService.recordTemperature(thermometer.getId(), 24.0, ChangeSource.SCHEDULED);
+        assertThat(reload(fan).getStatus()).isEqualTo(DeviceStatus.OFF);
+
+        sensorReadingService.recordTemperature(thermometer.getId(), 25.3, ChangeSource.SCHEDULED);
+        assertThat(reload(fan).getStatus()).as("seuil franchi").isEqualTo(DeviceStatus.ON);
+
+        switchOff(fan);
+        sensorReadingService.recordTemperature(thermometer.getId(), 25.8, ChangeSource.SCHEDULED);
+        assertThat(reload(fan).getStatus()).as("toujours au-dessus : pas de second déclenchement").isEqualTo(DeviceStatus.OFF);
+
+        sensorReadingService.recordTemperature(thermometer.getId(), 24.5, ChangeSource.SCHEDULED);
+        sensorReadingService.recordTemperature(thermometer.getId(), 25.1, ChangeSource.SCHEDULED);
+        assertThat(reload(fan).getStatus()).as("repassé sous le seuil puis franchi à nouveau").isEqualTo(DeviceStatus.ON);
+    }
+
+    @Test
     void reading_isRefusedForWrongDeviceType() {
         assertThatThrownBy(() -> sensorReadingService.recordTemperature(fan.getId(), 22.0, ChangeSource.SCHEDULED))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -145,6 +185,12 @@ class SensorReadingIntegrationTest {
         device.setOnline(true);
         device.setAssignedRoom(room);
         return deviceRepository.save(device);
+    }
+
+    private void switchOff(Device device) {
+        Device reloaded = reload(device);
+        reloaded.setStatus(DeviceStatus.OFF);
+        deviceRepository.save(reloaded);
     }
 
     private Device reload(Device device) {

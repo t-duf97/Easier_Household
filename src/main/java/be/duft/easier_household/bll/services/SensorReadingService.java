@@ -1,6 +1,7 @@
 package be.duft.easier_household.bll.services;
 
 import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
+import be.duft.easier_household.bll.events.DeviceValueChangedEvent;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
@@ -35,11 +36,16 @@ public class SensorReadingService {
      */
     public void recordTemperature(Long deviceId, double celsius, ChangeSource source) {
         Device sensor = sensorOfType(deviceId, DeviceType.SENSOR_TEMP);
+        String previousValue = sensor.getCurrentValue();
+        String newValue = String.format(Locale.ROOT, "%.1f", celsius);
 
-        sensor.setCurrentValue(String.format(Locale.ROOT, "%.1f", celsius));
+        sensor.setCurrentValue(newValue);
         sensor.setUpdatedAt(LocalDateTime.now());
         deviceRepository.save(sensor);
         recordState(sensor, source);
+        if (!newValue.equals(previousValue)) {
+            eventPublisher.publishEvent(new DeviceValueChangedEvent(sensor.getId(), previousValue, newValue));
+        }
     }
 
     /**

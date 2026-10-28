@@ -58,6 +58,7 @@ public class DeviceMapper {
         DeviceStateResponse response = new DeviceStateResponse();
         response.setId(state.getId());
         response.setDeviceId(state.getDevice().getId());
+        response.setStatus(state.getStatus());
         response.setValue(state.getValue());
         response.setChangeSource(state.getChangeSource());
         response.setChangedAt(state.getChangedAt());

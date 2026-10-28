@@ -28,7 +28,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 
 **Architecture (en cours de normalisation en 3 couches + transversal)**
 - `api` — `controllers`, `dtos/request`, `dtos/response`, `security` (JwtFilter, JwtService), `exceptions` (GlobalExceptionHandler, EmailAlreadyUsed…)
-- `bll` — `services`, `mappers`, `scheduler` (AutomationScheduler, SensorSimulatorScheduler), `events` (DeviceStatusChangedEvent), `exceptions` (ResourceNotFound, UnauthorizedAccess, DeviceUnavailable)
+- `bll` — `services` (dont `SensorReadingService`, entrée unique des relevés de capteurs), `mappers`, `scheduler` (AutomationScheduler, SensorSimulatorScheduler), `events` (DeviceStatusChangedEvent), `exceptions` (ResourceNotFound, UnauthorizedAccess, DeviceUnavailable)
 - `dl` — `entities`, `enums`, `repositories`, `converter` (ZoneIdConverter), `condition` (JpaSensorStateAdapter), `embeddable` (HouseholdMemberId)
 - `domain/condition` — **couche métier pure** (ports/adapters) : `SensorState` (record), `SensorStatePort` (port), `SensorThresholdRule` (règle, zéro Spring/JPA). Câblée dans `config/ConditionConfig`.
 - `config` — SecurityConfig, ConditionConfig (CorsConfig est commenté/désactivé)
@@ -64,8 +64,10 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - Les actions d'une automatisation ne republient pas d'événement (pas d'enchaînement, donc pas de boucle).
 - Conditions évaluées : DEVICE_STATUS, SENSOR_VALUE (délègue à `SensorThresholdRule` du domaine), TIME_RANGE, DAY_OF_WEEK, NO_MOTION_SINCE.
 - Actions : SET_DEVICE_STATUS, SET_DEVICE_VALUE, SEND_NOTIFICATION (log), WAIT (Thread.sleep).
-- `SensorSimulatorScheduler` (`@Profile("dev")`, toutes les 10 min) : simule des capteurs. **Incohérent, cf. À réparer.**
-- Capteurs = **simulés**. L'enum `ChangeSource.EXTERNAL_API` existe mais n'est utilisé nulle part : le branchement d'une vraie API capteurs reste à faire (le port `SensorStatePort` est le point d'entrée prévu).
+- Capteurs : `SensorReadingService.recordTemperature` écrit `currentValue` au format numérique (`"21.4"`) ; `recordMotion` passe le détecteur ON/OFF et publie `DeviceStatusChangedEvent` (un mouvement déclenche les automatisations). La `ChangeSource` est un paramètre.
+- `SensorSimulatorScheduler` (`@Profile("dev")`) ne fait que tirer des valeurs : marche aléatoire ±0,5 °C bornée 18–25 °C (`simulator.temperature.rate`, PT5M), détection 30 % (`simulator.motion.rate`, PT1M).
+- `TriggerType.SENSOR_THRESHOLD`, `SUNRISE`, `SUNSET` et `cronExpression` existent dans le modèle mais **ne sont pas évalués** par le moteur.
+- Capteurs = **simulés**. `ChangeSource.EXTERNAL_API` n'est utilisé que par les tests : la vraie API capteurs n'aura qu'à appeler `SensorReadingService` (le port `SensorStatePort` reste le point de lecture du domaine).
 
 **Tests existants** : `SensorThresholdRuleTest` (4 cas, pur, sans Spring — bon exemple du pattern). `AutomationEngineIntegrationTest` (moteur de bout en bout sur PostgreSQL Testcontainers, config dans `TestcontainersConfiguration`). `EasierHouseholdApplicationTests` (contexte, sur la base locale). Dépendances de test dispo : `webmvc-test`, `data-jpa-test`, `spring-security-test`.
 
@@ -74,7 +76,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 ## 2. Conventions & pièges (à respecter)
 
 - **Jamais exposer une entité JPA** : toujours via DTO. Les Response enrichissent avec des champs lisibles (`roomName`, `householdName` à côté des ids) — cf. `DeviceMapper`.
-- **Mappers** = conversion pure entité↔DTO, **sans injection de repository**. Le service orchestre repos + mappers.
+- **Mappers** = conversion pure entité↔DTO, **sans injection de repository**. Le service orchestre repos + mappers (ex. `AutomationService.resolveDevice` résout les devices et vérifie qu'ils appartiennent au foyer, puis les passe aux mappers).
 - **Toujours vérifier l'appartenance au foyer** avant d'accéder à une ressource : `householdMemberRepository.findByHouseholdIdAndUserId(...)` (cf. `AutomationService.checkMembership`). `checkOwnership` existe pour les actions réservées au OWNER.
 - `getCurrentUserId()` vient de `BaseController` (principal = `User` dans le SecurityContext). Les controllers métier l'étendent.
 - Spring Data : les noms de méthodes suivent les **champs Java**, underscore pour les relations (`findByAssignedRoom_Id`).
@@ -93,18 +95,19 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - [x] **`AutomationScheduler.executeAction` / cas `SET_DEVICE_VALUE`** : `deviceStateRepository.findById(action.getDevice().getId())` confond l'id du device avec un id de DeviceState → ne journalise pas (ou corrompt) l'état. Créer un **nouveau** `DeviceState` comme dans `SET_DEVICE_STATUS`.
 - [x] **LazyInitialization sur le cron** : `evaluateTimeBasedAutomations()` (@Scheduled) n'est pas `@Transactional` mais accède aux collections LAZY `getConditions()/getActions()/getTriggers()` → risque d'exception à l'exécution. Ajouter `@Transactional` (ou fetch-join dans les queries).
 - [x] **`DeviceState.changeSource` sans `@Enumerated(EnumType.STRING)`** → persisté en ORDINAL (incohérent, casse si l'ordre de l'enum change). Ajouter l'annotation. (Fait ; SQL de migration d'une base existante dans le message du commit.)
-- [ ] **`DELETE /households/{id}` → 500** (`TransientPropertyValueException` sur `HouseholdMember`) : les membres ne sont pas supprimés avec le foyer.
+- [x] **`DELETE /households/{id}` → 500** (`TransientPropertyValueException` sur `HouseholdMember`) : les membres ne sont pas supprimés avec le foyer.
 
 ### Important
-- [ ] **`SensorSimulatorScheduler.simulateTemperatureSensors()`** : le nom dit « température » mais le code simule du **mouvement** (ON/OFF) sur les `SENSOR_TEMP`, et n'écrit jamais de `currentValue` numérique. Résultat : les conditions `SENSOR_VALUE` (qui lisent `Device.currentValue` comme un nombre) n'ont rien à comparer. Décider : produire une vraie valeur numérique pour `SENSOR_TEMP`, et un simulateur de mouvement distinct pour `SENSOR_MOTION`.
+- [x] **`SensorSimulatorScheduler.simulateTemperatureSensors()`** : le nom dit « température » mais le code simule du **mouvement** (ON/OFF) sur les `SENSOR_TEMP`, et n'écrit jamais de `currentValue` numérique. Résultat : les conditions `SENSOR_VALUE` (qui lisent `Device.currentValue` comme un nombre) n'ont rien à comparer. Décider : produire une vraie valeur numérique pour `SENSOR_TEMP`, et un simulateur de mouvement distinct pour `SENSOR_MOTION`.
 - [x] **`DeviceService.changeState`** appelle `evaluateDeviceStateAutomations(id, request.getStatus())` avec un `status` possiblement `null` (quand seule la value change). Garder un status non-null ou court-circuiter l'appel.
 - [ ] **`Room.name` `unique = true` global** : empêche deux foyers d'avoir une pièce du même nom. Rendre l'unicité relative au `household` (contrainte composite) ou la retirer.
-- [ ] **`DeviceState.device` en `cascade = CascadeType.ALL`** sur un `@ManyToOne` : supprimer un état cascade vers le device. Retirer la cascade.
-- [ ] **`WAIT` fait un `Thread.sleep`** dans le thread appelant (requête HTTP pour le réactif, thread du scheduler pour le cron) : bloque tout le reste. À passer en exécution différée.
-- [ ] **Heure serveur** : le cron et `TIME_RANGE` utilisent `LocalTime.now()` et ignorent `Household.timeZone`. `TIME_RANGE` exclut aussi ses bornes (`isAfter`/`isBefore`).
-- [ ] **`JwtFilter` logue le header `Authorization` complet** (`System.out.println`) : fuite du token dans les logs. Supprimer.
-- [ ] **Mappers qui injectent un repository** (`AutomationTriggerMapper`, `AutomationActionMapper`), contraire à la convention ; la réponse d'action renvoie `deviceName`/`automationId` à `null`.
-- [ ] **Swagger** : `/v3/api-docs` (chemin par défaut de springdoc) n'est pas dans les `permitAll` de `SecurityConfig` (seul `/api-docs/**` l'est).
+- [x] **`DeviceState.device` en `cascade = CascadeType.ALL`** sur un `@ManyToOne` : supprimer un état cascade vers le device. Retirer la cascade.
+- [ ] **`WAIT` fait un `Thread.sleep`** dans le thread appelant (requête HTTP pour le réactif, thread du scheduler pour le cron) : bloque tout le reste. À passer en exécution différée. → planifié avec les Scènes (section 6).
+- [ ] **Heure serveur** : le cron et `TIME_RANGE` utilisent `LocalTime.now()` et ignorent `Household.timeZone`. `TIME_RANGE` exclut aussi ses bornes (`isAfter`/`isBefore`). → planifié avec les notifications (section 6).
+- [x] **`JwtFilter` logue le header `Authorization` complet** (`System.out.println`) : fuite du token dans les logs. Supprimer.
+- [x] **Mappers qui injectent un repository** (`AutomationTriggerMapper`, `AutomationActionMapper`), contraire à la convention ; la réponse d'action renvoie `deviceName`/`automationId` à `null`.
+- [ ] **Supprimer un device ou une pièce encore référencés** : `DeviceService.deleteDevice` ne retire pas les triggers/conditions/actions qui visent le device, et `RoomService.deleteRoom` ne supprime pas les devices de la pièce → violation de clé étrangère (500). Décider : refuser (409 en listant les automatisations concernées) ou supprimer les références.
+- [x] **Swagger** : `/v3/api-docs` (chemin par défaut de springdoc) n'est pas dans les `permitAll` de `SecurityConfig` (seul `/api-docs/**` l'est).
 - [ ] **`DeviceIntegrationController` vide** : soit l'implémenter (CRUD minimal), soit le supprimer tant qu'inutilisé, pour ne pas exposer une coquille.
 - [x] **Secrets en clair dans `application.yaml`** : le fichier n'est plus suivi par git (il l'était malgré le `.gitignore`) ; `application.example.yaml` versionné utilise des variables d'environnement. Choix assumé : valeurs en clair dans le yaml local, variables d'environnement le jour d'un déploiement.
 
@@ -123,7 +126,8 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 
 1. ✅ **Clôturer le refactor.** Vérifier compilation + démarrage, parcourir les fichiers modifiés pour cohérence des imports/packages, puis proposer un (ou quelques) commit(s) atomique(s) bien nommés. Ne rien ajouter de neuf.
 2. ✅ **Fiabiliser le moteur d'automatisations.** Corriger les 3 bugs bloquants ci-dessus (SET_DEVICE_VALUE, transaction du cron, status null), puis ajouter des tests : au moins un test d'intégration qui crée une automation TIME et une DEVICE_STATE_CHANGE et vérifie l'exécution.
-3. **Rendre le simulateur de capteurs cohérent.** Valeurs numériques réalistes pour `SENSOR_TEMP` (ex. 18–25 °C écrites dans `currentValue`), simulateur de mouvement séparé pour `SENSOR_MOTION`, `ChangeSource.SCHEDULED`. Objectif : que les conditions `SENSOR_VALUE` deviennent testables de bout en bout.
+2bis. ✅ **Corrections rapides.** DELETE household, cascade DeviceState, JWT dans les logs, Swagger, mappers sans repository (+ contrôle d'appartenance des devices), conditions sans device.
+3. ✅ **Rendre le simulateur de capteurs cohérent.** Valeurs numériques réalistes pour `SENSOR_TEMP` (ex. 18–25 °C écrites dans `currentValue`), simulateur de mouvement séparé pour `SENSOR_MOTION`, `ChangeSource.SCHEDULED`. Objectif : que les conditions `SENSOR_VALUE` deviennent testables de bout en bout.
 4. **Décider le sort de `DeviceIntegration`.** Soit CRUD complet (controller + service + DTO + mapper + ownership), soit suppression propre. Documenter le choix.
 5. **Tests d'intégration des endpoints.** Couvrir auth (register/login + accès protégé), households et devices avec `@WebMvcTest`/`spring-security-test` et un `@DataJpaTest` pour les queries custom d'`AutomationRepository`.
 6. **(Plus tard) Brancher une vraie source de capteurs.** L'archi hexagonale est déjà prête : écrire un nouvel adaptateur de `SensorStatePort` (REST polling ou webhook) à la place/à côté de `JpaSensorStateAdapter`, taguer les états ingérés `ChangeSource.EXTERNAL_API`, sécuriser par clé de service (pas le JWT user), idempotence, garde-fou anti-boucle. C'est le « lien API capteurs » — à ne faire qu'une fois 1–5 au vert.
@@ -139,5 +143,5 @@ Front Angular : dépôt séparé `frontEasierHousehold` (Angular 21, PrimeNG 21,
 
 > Décidées le 2026-10-27. Projet perso, pour le plaisir — pas de deadline de jury. À n'attaquer qu'une fois la section 3 (À réparer) et les points 1–5 de « À faire ensuite » au vert.
 
-- **Notifications intelligentes.** Donner un vrai canal à `ActionType.SEND_NOTIFICATION` (aujourd'hui un simple `log.info`) : entité `Notification` (historique, lu/non-lu, gravité), livraison (in-app SSE/WebSocket, e-mail ou web push), préférences par utilisateur + heures silencieuses (s'appuyer sur `Household.timeZone` et les `timeFrom/timeTo`), anti-spam via un cooldown par automatisation (`lastTriggeredAt` existe déjà).
-- **Scènes / modes** (« Absent », « Nuit », « Cinéma »…). Nouvelle entité `Scene` + liste d'actions, qui réutilise l'exécution d'actions du moteur existant ; endpoint pour déclencher une scène d'un coup.
+- **Notifications intelligentes.** Donner un vrai canal à `ActionType.SEND_NOTIFICATION` (aujourd'hui un simple `log.info`) : entité `Notification` (historique, lu/non-lu, gravité), livraison (in-app SSE/WebSocket, e-mail ou web push), préférences par utilisateur + heures silencieuses (s'appuyer sur `Household.timeZone` et les `timeFrom/timeTo`), anti-spam via un cooldown par automatisation (`lastTriggeredAt` existe déjà). À faire avec le fuseau horaire : cron et `TIME_RANGE` calculés dans `Household.timeZone` (et bornes de `TIME_RANGE` incluses).
+- **Scènes / modes** (« Absent », « Nuit », « Cinéma »…). Nouvelle entité `Scene` + liste d'actions, qui réutilise l'exécution d'actions du moteur existant ; endpoint pour déclencher une scène d'un coup. À faire avec la reprise de `WAIT` (aujourd'hui `Thread.sleep` bloquant) : exécution différée des actions restantes via un `TaskScheduler`, que les scènes réutiliseront.

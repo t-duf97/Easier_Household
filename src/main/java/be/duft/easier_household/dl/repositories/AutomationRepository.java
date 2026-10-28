@@ -27,13 +27,18 @@ public interface AutomationRepository extends BaseRepository<Automation, Long> {
                         JOIN a.triggers t
                         WHERE a.isEnabled = true
                         AND t.type = 'TIME'
-                        AND t.timeValue = :timeValue
+                        AND t.timeValue BETWEEN :minuteStart AND :minuteEnd
                         AND (t.daysOfWeek IS NULL OR t.daysOfWeek LIKE %:dayOfWeek%)"""
     )
     List<Automation> findEnabledAutomationsWithTimeTrigger(
-            @Param("timeValue") LocalTime timeValue,
+            @Param("minuteStart") LocalTime minuteStart,
+            @Param("minuteEnd") LocalTime minuteEnd,
             @Param("dayOfWeek") String dayOfWeek
     );
+
+    default List<Automation> findEnabledAutomationsWithTimeTrigger(LocalTime minute, String dayOfWeek) {
+        return findEnabledAutomationsWithTimeTrigger(minute, minute.plusSeconds(59), dayOfWeek);
+    }
 
 
     /**

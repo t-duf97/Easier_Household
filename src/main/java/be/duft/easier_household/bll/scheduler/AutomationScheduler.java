@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -78,25 +79,24 @@ public class AutomationScheduler {
 
     @Scheduled(cron = "0 * * * * *") // A la seconde 0 de chaque minute
     public void evaluateTimeBasedAutomations() {
-        LocalTime now = LocalTime.now();
-        String today = LocalDate.now().getDayOfWeek().name().substring(0, 3);
+        evaluateTimeBasedAutomations(LocalDateTime.now());
+    }
 
-        log.debug("Evaluating time based automations at {}", now);
+    /**
+     * Évalue les triggers TIME de la minute contenant {@code at}. Les secondes sont ignorées :
+     * un trigger "09:30" correspond à toute exécution entre 09:30:00 et 09:30:59.
+     */
+    public void evaluateTimeBasedAutomations(LocalDateTime at) {
+        LocalTime minute = at.toLocalTime().truncatedTo(ChronoUnit.MINUTES);
+        String today = at.getDayOfWeek().name().substring(0, 3);
 
-        List<Automation> automations = automationRepository
-                .findEnabledAutomationsWithTimeTrigger(now, today);
+        List<Long> automationIds = newTransaction.execute(status -> automationRepository
+                .findEnabledAutomationsWithTimeTrigger(minute, today)
+                .stream().map(Automation::getId).toList());
 
-        log.info("Found {} TIME automations to evaluate at {}", automations.size(), now);
+        log.info("Found {} TIME automations to evaluate at {}", automationIds.size(), minute);
 
-        for (Automation automation : automations) {
-            try {
-                evaluateAndExecute(automation);
-            } catch (Exception e) {
-                log.error("Error  evaluating automation {} (id = {}): {}",
-                        automation.getName(), automation.getId(), e.getMessage(), e);
-            }
-        }
-
+        runEachInOwnTransaction(automationIds);
     }
 
     public void evaluateAndExecute(Automation automation) {

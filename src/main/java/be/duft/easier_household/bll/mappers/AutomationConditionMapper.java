@@ -20,9 +20,7 @@ public class AutomationConditionMapper {
 
         response.setId(condition.getId());
         response.setType(condition.getType());
-        response.setDeviceId(condition.getDevice().getId());
-        response.setDeviceName(condition.getDevice().getName());
-        response.setStatus(condition.getDevice().getStatus());
+        response.setStatus(condition.getStatus());
         response.setThresholdValue(condition.getThresholdValue());
         response.setThresholdOperator(condition.getThresholdOperator());
         response.setTimeFrom(condition.getTimeFrom());
@@ -30,6 +28,11 @@ public class AutomationConditionMapper {
         response.setDaysOfWeek(condition.getDaysOfWeek());
         response.setDurationInMinutes(condition.getDurationInMinutes());
 
+        // Device optionnel : TIME_RANGE et DAY_OF_WEEK n'en ont pas.
+        if (condition.getDevice() != null) {
+            response.setDeviceId(condition.getDevice().getId());
+            response.setDeviceName(condition.getDevice().getName());
+        }
         return response;
     }
 
@@ -43,14 +46,13 @@ public class AutomationConditionMapper {
         condition.setTimeTo(request.getTimeTo());
         condition.setDaysOfWeek(request.getDaysOfWeek());
         condition.setDurationInMinutes(request.getDurationInMinutes());
+        condition.setStatus(request.getStatus());
 
         if (request.getDeviceId() != null) {
             Device device = deviceRepository.findById(request.getDeviceId())
                     .orElseThrow(() -> new ResourceNotFoundException("Device with id: " + request.getDeviceId() + " not found!"));
 
             condition.setDevice(device);
-            condition.setStatus(request.getStatus());
-
         }
         return condition;
     }

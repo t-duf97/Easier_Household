@@ -147,6 +147,25 @@ class AutomationEngineIntegrationTest {
     }
 
     @Test
+    void conditionWithoutDevice_isSavedAndEvaluated() {
+        Device switchA = device("Interrupteur");
+        Device lampB = device("Lampe");
+        Automation automation = automation("A ON -> B ON, tous les jours");
+        automation.getTriggers().add(stateTrigger(automation, switchA, DeviceStatus.ON));
+        AutomationCondition everyDay = new AutomationCondition();
+        everyDay.setAutomation(automation);
+        everyDay.setType(ConditionType.DAY_OF_WEEK);
+        everyDay.setDaysOfWeek("MON,TUE,WED,THU,FRI,SAT,SUN");
+        automation.getConditions().add(everyDay);
+        automation.getActions().add(setStatusAction(automation, lampB, DeviceStatus.ON, 1));
+        automationRepository.save(automation);
+
+        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON));
+
+        assertThat(statusOf(lampB)).isEqualTo(DeviceStatus.ON);
+    }
+
+    @Test
     void timeTrigger_runsDuringItsMinuteOnly() {
         Device lamp = device("Lampe");
         Automation automation = automation("Réveil 07:15");

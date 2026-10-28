@@ -23,7 +23,7 @@ public class AutomationCondition extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Getter @Setter
-    @Column(nullable = false)
+    @Column(nullable = true)
     private DeviceStatus status;
 
     @Getter @Setter

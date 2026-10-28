@@ -1,0 +1,32 @@
+# Modèle de configuration. Copier en application.yaml (gitignoré) :
+#   cp src/main/resources/application.example.yaml src/main/resources/application.yaml
+# Les secrets viennent des variables d'environnement, jamais en dur dans un fichier versionné.
+spring:
+  application:
+    name: Easier_Household
+  datasource:
+    url: jdbc:postgresql://localhost:5432/easierhouseholddb
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: always
+  jpa:
+    defer-datasource-initialization: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET}
+
+logging:
+  level:
+    be.duft.easier_household.bll.scheduler: DEBUG

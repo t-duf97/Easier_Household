@@ -28,7 +28,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 
 **Architecture (en cours de normalisation en 3 couches + transversal)**
 - `api` — `controllers`, `dtos/request`, `dtos/response`, `security` (JwtFilter, JwtService), `exceptions` (GlobalExceptionHandler, EmailAlreadyUsed…)
-- `bll` — `services` (dont `SensorReadingService`, entrée unique des relevés de capteurs), `mappers`, `scheduler` (AutomationScheduler, SensorSimulatorScheduler), `events` (DeviceStatusChangedEvent), `exceptions` (ResourceNotFound, UnauthorizedAccess, DeviceUnavailable)
+- `bll` — `services` (dont `SensorReadingService`, entrée unique des relevés de capteurs), `mappers`, `scheduler` (AutomationScheduler, SensorSimulatorScheduler), `events` (DeviceStatusChangedEvent), `exceptions` (ResourceNotFound → 404, UnauthorizedAccess → 403, ResourceAlreadyExists → 409, DeviceUnavailable → 503)
 - `dl` — `entities`, `enums`, `repositories`, `converter` (ZoneIdConverter), `condition` (JpaSensorStateAdapter), `embeddable` (HouseholdMemberId)
 - `domain/condition` — **couche métier pure** (ports/adapters) : `SensorState` (record), `SensorStatePort` (port), `SensorThresholdRule` (règle, zéro Spring/JPA). Câblée dans `config/ConditionConfig`.
 - `config` — SecurityConfig, ConditionConfig (CorsConfig est commenté/désactivé)
@@ -38,9 +38,9 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - `User` (table `app_user`) : firstName, lastName, email (unique), passwordHash.
 - `Household` : name, `timeZone` (ZoneId via ZoneIdConverter), address, createdBy→User.
 - `HouseholdMember` : clé composite `HouseholdMemberId` (@EmbeddedId, userId+householdId), role (`Role`), joinedAt. **N'étend pas BaseEntity.**
-- `Room` : name (**unique global — bug, cf. À réparer**), floor, roomType (`RoomType`), household→Household.
+- `Room` : name (unique **par foyer** : contrainte `uk_room_household_name`), floor, roomType (`RoomType`), household→Household.
 - `Device` (table `device`) : name, type (`DeviceType`), currentValue (String), isOnline, status (`DeviceStatus`), assignedRoom→Room (@JoinColumn `roomId`).
-- `DeviceState` : status, value, changeSource (`ChangeSource`), changedAt, user→User, device→Device (**`cascade = ALL` sur un ManyToOne, cf. À réparer**).
+- `DeviceState` : status, value, changeSource (`ChangeSource`), changedAt, user→User, device→Device.
 - `DeviceIntegration` : provider, device→Device (@OneToOne), externalDeviceId, credentialsRef, extraConfig. **Entité présente mais non exploitée** (controller vide).
 - `Automation` : name, description, logic (`ConditionLogic` ALL/ANY), isEnabled, lastTriggeredAt, createdBy→User, household→Household, + listes `triggers` / `conditions` / `actions` (cascade ALL, orphanRemoval).
 - `AutomationTrigger` : type (`TriggerType`), timeValue, daysOfWeek (String), status, thresholdValue, thresholdOperator, cronExpression, device.
@@ -69,7 +69,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - `TriggerType.SENSOR_THRESHOLD`, `SUNRISE`, `SUNSET` et `cronExpression` existent dans le modèle mais **ne sont pas évalués** par le moteur.
 - Capteurs = **simulés**. `ChangeSource.EXTERNAL_API` n'est utilisé que par les tests : la vraie API capteurs n'aura qu'à appeler `SensorReadingService` (le port `SensorStatePort` reste le point de lecture du domaine).
 
-**Tests existants** : `SensorThresholdRuleTest` (4 cas, pur, sans Spring — bon exemple du pattern). `AutomationEngineIntegrationTest` (moteur de bout en bout sur PostgreSQL Testcontainers, config dans `TestcontainersConfiguration`). `EasierHouseholdApplicationTests` (contexte, sur la base locale). Dépendances de test dispo : `webmvc-test`, `data-jpa-test`, `spring-security-test`.
+**Tests existants** : `SensorThresholdRuleTest` (4 cas, pur, sans Spring — bon exemple du pattern). `AutomationEngineIntegrationTest` (moteur de bout en bout), `SensorReadingIntegrationTest`, `AutomationServiceIntegrationTest`, `HouseholdDeletionIntegrationTest`, `DeviceDeletionIntegrationTest`, `RoomNameUniquenessIntegrationTest` : tous sur PostgreSQL Testcontainers (config dans `TestcontainersConfiguration`). `SensorSimulatorSchedulerTest` (pur). `EasierHouseholdApplicationTests` (contexte, sur la base locale). Dépendances de test dispo : `webmvc-test`, `data-jpa-test`, `spring-security-test`.
 
 ---
 
@@ -80,6 +80,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - **Toujours vérifier l'appartenance au foyer** avant d'accéder à une ressource : `householdMemberRepository.findByHouseholdIdAndUserId(...)` (cf. `AutomationService.checkMembership`). `checkOwnership` existe pour les actions réservées au OWNER.
 - `getCurrentUserId()` vient de `BaseController` (principal = `User` dans le SecurityContext). Les controllers métier l'étendent.
 - Spring Data : les noms de méthodes suivent les **champs Java**, underscore pour les relations (`findByAssignedRoom_Id`).
+- **Suppressions** : supprimer un device (ou une pièce, ou un foyer) supprime **les automatisations entières** qui le référencent, jamais seulement le trigger/condition/action concerné (retirer une condition rendrait l'automatisation moins restrictive). Passer par `DeviceService.deleteWithReferences`.
 - Enums persistés en **`@Enumerated(EnumType.STRING)`** partout — garder cette règle (cf. le bug `ChangeSource`).
 - **Piège récurrent (noms de champs Spring ↔ TS)** : vérifier le JSON réel (onglet Network / Swagger) avant de modéliser côté Angular. Déjà vu : `status` vs `deviceStatus`, `timeZone` vs `timezone`, `type` vs `deviceType`/`triggerType`.
 - `ddl-auto: update` ne renomme jamais une colonne ; après un gros refactor d'entité, un `create-drop` temporaire remet à zéro.
@@ -98,15 +99,16 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - [x] **`DELETE /households/{id}` → 500** (`TransientPropertyValueException` sur `HouseholdMember`) : les membres ne sont pas supprimés avec le foyer.
 
 ### Important
+- [ ] **Sécurité : aucun contrôle d'appartenance sur la plupart des routes devices.** `DeviceService.findById`, `findByRoomId`, `create`, `update`, `changeState`, `getHistory` et `RoomService.findById` ne reçoivent pas l'utilisateur : n'importe quel compte connecté peut lire, modifier ou piloter les devices de n'importe quel foyer (seul `DELETE /devices/{id}` vérifie l'appartenance). Passer le `userId` et vérifier comme dans `AutomationService.checkMembership`.
 - [x] **`SensorSimulatorScheduler.simulateTemperatureSensors()`** : le nom dit « température » mais le code simule du **mouvement** (ON/OFF) sur les `SENSOR_TEMP`, et n'écrit jamais de `currentValue` numérique. Résultat : les conditions `SENSOR_VALUE` (qui lisent `Device.currentValue` comme un nombre) n'ont rien à comparer. Décider : produire une vraie valeur numérique pour `SENSOR_TEMP`, et un simulateur de mouvement distinct pour `SENSOR_MOTION`.
 - [x] **`DeviceService.changeState`** appelle `evaluateDeviceStateAutomations(id, request.getStatus())` avec un `status` possiblement `null` (quand seule la value change). Garder un status non-null ou court-circuiter l'appel.
-- [ ] **`Room.name` `unique = true` global** : empêche deux foyers d'avoir une pièce du même nom. Rendre l'unicité relative au `household` (contrainte composite) ou la retirer.
+- [x] **`Room.name` `unique = true` global** : empêche deux foyers d'avoir une pièce du même nom. Rendre l'unicité relative au `household` (contrainte composite) ou la retirer.
 - [x] **`DeviceState.device` en `cascade = CascadeType.ALL`** sur un `@ManyToOne` : supprimer un état cascade vers le device. Retirer la cascade.
 - [ ] **`WAIT` fait un `Thread.sleep`** dans le thread appelant (requête HTTP pour le réactif, thread du scheduler pour le cron) : bloque tout le reste. À passer en exécution différée. → planifié avec les Scènes (section 6).
 - [ ] **Heure serveur** : le cron et `TIME_RANGE` utilisent `LocalTime.now()` et ignorent `Household.timeZone`. `TIME_RANGE` exclut aussi ses bornes (`isAfter`/`isBefore`). → planifié avec les notifications (section 6).
 - [x] **`JwtFilter` logue le header `Authorization` complet** (`System.out.println`) : fuite du token dans les logs. Supprimer.
 - [x] **Mappers qui injectent un repository** (`AutomationTriggerMapper`, `AutomationActionMapper`), contraire à la convention ; la réponse d'action renvoie `deviceName`/`automationId` à `null`.
-- [ ] **Supprimer un device ou une pièce encore référencés** : `DeviceService.deleteDevice` ne retire pas les triggers/conditions/actions qui visent le device, et `RoomService.deleteRoom` ne supprime pas les devices de la pièce → violation de clé étrangère (500). Décider : refuser (409 en listant les automatisations concernées) ou supprimer les références.
+- [x] **Supprimer un device ou une pièce encore référencés** : `DeviceService.deleteDevice` ne retire pas les triggers/conditions/actions qui visent le device, et `RoomService.deleteRoom` ne supprime pas les devices de la pièce → violation de clé étrangère (500). Décidé : on supprime les automatisations qui les référencent.
 - [x] **Swagger** : `/v3/api-docs` (chemin par défaut de springdoc) n'est pas dans les `permitAll` de `SecurityConfig` (seul `/api-docs/**` l'est).
 - [ ] **`DeviceIntegrationController` vide** : soit l'implémenter (CRUD minimal), soit le supprimer tant qu'inutilisé, pour ne pas exposer une coquille.
 - [x] **Secrets en clair dans `application.yaml`** : le fichier n'est plus suivi par git (il l'était malgré le `.gitignore`) ; `application.example.yaml` versionné utilise des variables d'environnement. Choix assumé : valeurs en clair dans le yaml local, variables d'environnement le jour d'un déploiement.

@@ -33,4 +33,16 @@ public interface AutomationTriggerRepository extends BaseRepository<AutomationTr
                 AND t.cronExpression IS NOT NULL
             """)
     List<AutomationTrigger> findEnabledCronTriggers();
+
+    /**
+     * Triggers SUNRISE et SUNSET d'automatisations actives, avec leur foyer (position et fuseau horaire).
+     */
+    @Query("""
+            SELECT t FROM AutomationTrigger t
+                JOIN FETCH t.automation a
+                JOIN FETCH a.household
+                WHERE a.isEnabled = true
+                AND (t.type = 'SUNRISE' OR t.type = 'SUNSET')
+            """)
+    List<AutomationTrigger> findEnabledSunTriggers();
 }

@@ -2,6 +2,8 @@ package be.duft.easier_household.api.dtos.request;
 
 
 import be.duft.easier_household.dl.entities.HouseholdMember;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -21,5 +23,11 @@ public class HouseholdRequest {
 
 
     private String address;
+
+    @DecimalMin("-90.0") @DecimalMax("90.0")
+    private Double latitude;
+
+    @DecimalMin("-180.0") @DecimalMax("180.0")
+    private Double longitude;
 
 }

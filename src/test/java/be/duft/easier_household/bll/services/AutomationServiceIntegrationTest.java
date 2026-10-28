@@ -97,6 +97,17 @@ class AutomationServiceIntegrationTest {
     }
 
     @Test
+    void sunTrigger_requiresHouseholdCoordinates() {
+        AutomationTriggerRequest sunrise = new AutomationTriggerRequest();
+        sunrise.setType(TriggerType.SUNRISE);
+
+        assertThatThrownBy(() -> automationService.create(household.getId(),
+                request(sunrise, List.of(statusAction(lamp.getId(), null))), owner.getId()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("latitude");
+    }
+
+    @Test
     void update_cannotRemoveAllTriggers() {
         AutomationResponse created = automationService.create(household.getId(),
                 request(trigger(lamp.getId()), List.of(statusAction(lamp.getId(), null))), owner.getId());

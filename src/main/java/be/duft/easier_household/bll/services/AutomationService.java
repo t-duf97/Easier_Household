@@ -176,7 +176,12 @@ public class AutomationService {
                             "SENSOR_THRESHOLD trigger requires deviceId, thresholdValue and thresholdOperator");
                 }
             }
-            default -> throw new InvalidRequestException(trigger.getType() + " triggers are not supported yet");
+            case SUNRISE, SUNSET -> {
+                if (household.getLatitude() == null || household.getLongitude() == null) {
+                    throw new InvalidRequestException(trigger.getType()
+                            + " trigger requires the household latitude and longitude");
+                }
+            }
         }
     }
 

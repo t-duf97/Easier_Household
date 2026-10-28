@@ -8,7 +8,9 @@ import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.repositories.DeviceStateRepository;
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.ChangeSource;
+import be.duft.easier_household.dl.enums.TriggerType;
 import be.duft.easier_household.domain.condition.SensorThresholdRule;
+import be.duft.easier_household.domain.sun.SunCalculator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,12 +20,16 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,18 +121,43 @@ public class AutomationScheduler {
         LocalTime minute = at.toLocalTime().truncatedTo(ChronoUnit.MINUTES);
         String today = at.getDayOfWeek().name().substring(0, 3);
 
-        List<Long> automationIds = newTransaction.execute(status -> Stream.concat(
+        List<Long> automationIds = newTransaction.execute(status -> Stream.of(
                         automationRepository.findEnabledAutomationsWithTimeTrigger(minute, today).stream()
                                 .map(Automation::getId),
                         automationTriggerRepository.findEnabledCronTriggers().stream()
                                 .filter(t -> CronSchedule.matchesMinute(t.getCronExpression(), at))
+                                .map(t -> t.getAutomation().getId()),
+                        automationTriggerRepository.findEnabledSunTriggers().stream()
+                                .filter(t -> sunEventInMinute(t, at))
                                 .map(t -> t.getAutomation().getId()))
+                .flatMap(ids -> ids)
                 .distinct()
                 .toList());
 
         log.info("Found {} TIME automations to evaluate at {}", automationIds.size(), minute);
 
         runEachInOwnTransaction(automationIds);
+    }
+
+    /**
+     * Vrai si le lever (SUNRISE) ou le coucher (SUNSET) du soleil au foyer tombe dans la minute de {@code at},
+     * calculé dans le fuseau horaire du foyer. Faux si le foyer n'a pas de position ou un jour polaire.
+     */
+    private boolean sunEventInMinute(AutomationTrigger trigger, LocalDateTime at) {
+        Household household = trigger.getAutomation().getHousehold();
+        if (household.getLatitude() == null || household.getLongitude() == null) {
+            return false;
+        }
+        ZoneId zone = household.getTimeZone();
+        ZonedDateTime local = at.atZone(ZoneId.systemDefault()).withZoneSameInstant(zone).truncatedTo(ChronoUnit.MINUTES);
+        String day = local.getDayOfWeek().name().substring(0, 3);
+        if (trigger.getDaysOfWeek() != null && !trigger.getDaysOfWeek().contains(day)) {
+            return false;
+        }
+        Optional<Instant> event = trigger.getType() == TriggerType.SUNRISE
+                ? SunCalculator.sunrise(local.toLocalDate(), household.getLatitude(), household.getLongitude())
+                : SunCalculator.sunset(local.toLocalDate(), household.getLatitude(), household.getLongitude());
+        return event.map(instant -> instant.atZone(zone).truncatedTo(ChronoUnit.MINUTES).equals(local)).orElse(false);
     }
 
     public void evaluateAndExecute(Automation automation) {

@@ -15,6 +15,7 @@ import be.duft.easier_household.dl.entities.User;
 import be.duft.easier_household.dl.enums.Role;
 import be.duft.easier_household.api.dtos.request.HouseholdRequest;
 import be.duft.easier_household.api.dtos.response.HouseholdResponse;
+import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.mappers.HouseholdMapper;
@@ -64,6 +65,7 @@ public class HouseholdService {
 
     public HouseholdResponse create(HouseholdRequest request, Long userId) {
         User user = userService.findById(userId);
+        checkCoordinates(request);
 
         Household household = householdMapper.fromRequesttoEntity(request);
         household.setCreatedBy(user);
@@ -90,6 +92,7 @@ public class HouseholdService {
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
 
         checkOwnership(household, userId);
+        checkCoordinates(request);
 
         householdMapper.updateEntityFromRequest(request, household);
         return householdMapper.fromEntityToResponse(householdRepository.save(household));
@@ -115,6 +118,15 @@ public class HouseholdService {
         roomRepository.deleteByHouseholdId(id);
         householdMemberRepository.deleteByHouseholdId(id);
         householdRepository.delete(household);
+    }
+
+    /**
+     * Latitude et longitude vont ensemble : l'une sans l'autre ne permet pas de situer le foyer.
+     */
+    private void checkCoordinates(HouseholdRequest request) {
+        if ((request.getLatitude() == null) != (request.getLongitude() == null)) {
+            throw new InvalidRequestException("latitude and longitude must be provided together");
+        }
     }
 
     private void checkOwnership(Household household, Long userId) {

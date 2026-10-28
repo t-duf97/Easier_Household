@@ -25,6 +25,17 @@ public class Household extends BaseEntity {
     @Getter @Setter
     private String address;
 
+    /**
+     * Position du foyer en degrés décimaux, nécessaire aux triggers SUNRISE / SUNSET.
+     */
+    @Column
+    @Getter @Setter
+    private Double latitude;
+
+    @Column
+    @Getter @Setter
+    private Double longitude;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     @Getter @Setter

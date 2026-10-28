@@ -7,6 +7,7 @@ import be.duft.easier_household.dl.embeddable.HouseholdMemberId;
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.*;
 import be.duft.easier_household.dl.repositories.*;
+import be.duft.easier_household.domain.sun.SunCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -194,6 +196,35 @@ class AutomationEngineIntegrationTest {
         assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.OFF);
 
         automationScheduler.evaluateTimeBasedAutomations(wednesday.withMinute(30).withSecond(5));
+        assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.ON);
+    }
+
+    @Test
+    void sunsetTrigger_runsAtTheHouseholdSunsetMinute() {
+        household.setLatitude(50.8503);
+        household.setLongitude(4.3517);
+        household = householdRepository.save(household);
+
+        Device lamp = device("Lampe du jardin");
+        Automation automation = automation("Coucher du soleil -> jardin");
+        automation.setHousehold(household);
+        AutomationTrigger trigger = new AutomationTrigger();
+        trigger.setAutomation(automation);
+        trigger.setType(TriggerType.SUNSET);
+        trigger.setDaysOfWeek("WED");
+        automation.getTriggers().add(trigger);
+        automation.getActions().add(setStatusAction(automation, lamp, DeviceStatus.ON, 1));
+        automationRepository.save(automation);
+
+        LocalDate wednesday = LocalDate.of(2026, 10, 28);
+        LocalDateTime sunset = SunCalculator.sunset(wednesday, 50.8503, 4.3517).orElseThrow()
+                .atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        automationScheduler.evaluateTimeBasedAutomations(sunset.minusMinutes(1));
+        automationScheduler.evaluateTimeBasedAutomations(sunset.plusDays(1));
+        assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.OFF);
+
+        automationScheduler.evaluateTimeBasedAutomations(sunset);
         assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.ON);
     }
 

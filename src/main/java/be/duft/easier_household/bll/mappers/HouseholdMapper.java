@@ -23,6 +23,9 @@ public class HouseholdMapper {
                 household.getCreatedBy().getFirstName() + " " + household.getCreatedBy().getLastName()
         );
         householdResponse.setTimeZone(household.getTimeZone().getId());
+        householdResponse.setAddress(household.getAddress());
+        householdResponse.setLatitude(household.getLatitude());
+        householdResponse.setLongitude(household.getLongitude());
         return householdResponse;
     }
     public HouseholdResponse fromEntityToResponse(Household household, Set<HouseholdMember> members, List<Room> rooms) {
@@ -34,6 +37,9 @@ public class HouseholdMapper {
                 household.getCreatedBy().getFirstName() + " " + household.getCreatedBy().getLastName()
         );
         householdResponse.setTimeZone(household.getTimeZone().getId());
+        householdResponse.setAddress(household.getAddress());
+        householdResponse.setLatitude(household.getLatitude());
+        householdResponse.setLongitude(household.getLongitude());
         householdResponse.setMemberCount(members.size());
         householdResponse.setRoomCount(rooms.size());
         return householdResponse;
@@ -43,6 +49,9 @@ public class HouseholdMapper {
         Household household = new Household();
         household.setName(householdRequest.getName());
         household.setTimeZone(ZoneId.of(householdRequest.getTimeZone()));
+        household.setAddress(householdRequest.getAddress());
+        household.setLatitude(householdRequest.getLatitude());
+        household.setLongitude(householdRequest.getLongitude());
         return household;
     }
 
@@ -56,6 +65,10 @@ public class HouseholdMapper {
         if (request.getAddress() != null) {
             household.setAddress(request.getAddress());
         } else household.setAddress(household.getAddress());
+        if (request.getLatitude() != null || request.getLongitude() != null) {
+            household.setLatitude(request.getLatitude());
+            household.setLongitude(request.getLongitude());
+        }
 
     }
 }

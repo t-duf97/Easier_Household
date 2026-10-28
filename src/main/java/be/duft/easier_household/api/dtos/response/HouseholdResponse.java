@@ -21,4 +21,6 @@ public class HouseholdResponse {
     private int memberCount;;
     private String address;
     private int roomCount;
+    private Double latitude;
+    private Double longitude;
 }

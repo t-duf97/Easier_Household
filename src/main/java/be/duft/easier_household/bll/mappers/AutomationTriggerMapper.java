@@ -1,19 +1,13 @@
 package be.duft.easier_household.bll.mappers;
 
-import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.entities.AutomationTrigger;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.api.dtos.request.AutomationTriggerRequest;
 import be.duft.easier_household.api.dtos.response.AutomationTriggerResponse;
-import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class AutomationTriggerMapper {
-
-    private final DeviceRepository deviceRepository;
 
     public AutomationTriggerResponse fromEntityToResponse(AutomationTrigger trigger) {
         AutomationTriggerResponse response = new AutomationTriggerResponse();
@@ -27,6 +21,9 @@ public class AutomationTriggerMapper {
         response.setStatus(trigger.getStatus());
         response.setDaysOfWeek(trigger.getDaysOfWeek());
 
+        if (trigger.getAutomation() != null) {
+            response.setAutomationId(trigger.getAutomation().getId());
+        }
         if (trigger.getDevice() != null){
             response.setDeviceId(trigger.getDevice().getId());
             response.setDeviceName(trigger.getDevice().getName());
@@ -34,7 +31,10 @@ public class AutomationTriggerMapper {
         return response;
     }
 
-    public AutomationTrigger fromRequestToEntity(AutomationTriggerRequest request) {
+    /**
+     * @param device le device référencé par {@code request.deviceId}, déjà résolu par le service (null si aucun)
+     */
+    public AutomationTrigger fromRequestToEntity(AutomationTriggerRequest request, Device device) {
         AutomationTrigger trigger = new AutomationTrigger();
 
         trigger.setType(request.getType());
@@ -44,12 +44,7 @@ public class AutomationTriggerMapper {
         trigger.setStatus(request.getStatus());
         trigger.setThresholdValue(request.getThresholdValue());
         trigger.setThresholdOperator(request.getThresholdOperator());
-
-        if (request.getDeviceId()!= null){
-            Device device = deviceRepository.findById(request.getDeviceId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Device with id: " + request.getDeviceId() + " not found!"));
-            trigger.setDevice(device);
-        }
+        trigger.setDevice(device);
         return trigger;
     }
 }

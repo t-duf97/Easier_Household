@@ -1,19 +1,13 @@
 package be.duft.easier_household.bll.mappers;
 
-import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.entities.AutomationCondition;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.api.dtos.request.AutomationConditionRequest;
 import be.duft.easier_household.api.dtos.response.AutomationConditionResponse;
-import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class AutomationConditionMapper {
-
-    private final DeviceRepository deviceRepository;
 
     public AutomationConditionResponse fromEntityToResponse(AutomationCondition condition) {
         AutomationConditionResponse response = new AutomationConditionResponse();
@@ -36,7 +30,10 @@ public class AutomationConditionMapper {
         return response;
     }
 
-    public AutomationCondition fromRequestToEntity(AutomationConditionRequest request) {
+    /**
+     * @param device le device référencé par {@code request.deviceId}, déjà résolu par le service (null si aucun)
+     */
+    public AutomationCondition fromRequestToEntity(AutomationConditionRequest request, Device device) {
         AutomationCondition condition = new AutomationCondition();
 
         condition.setType(request.getType());
@@ -47,13 +44,7 @@ public class AutomationConditionMapper {
         condition.setDaysOfWeek(request.getDaysOfWeek());
         condition.setDurationInMinutes(request.getDurationInMinutes());
         condition.setStatus(request.getStatus());
-
-        if (request.getDeviceId() != null) {
-            Device device = deviceRepository.findById(request.getDeviceId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Device with id: " + request.getDeviceId() + " not found!"));
-
-            condition.setDevice(device);
-        }
+        condition.setDevice(device);
         return condition;
     }
 

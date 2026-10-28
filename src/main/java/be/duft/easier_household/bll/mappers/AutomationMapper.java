@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -57,41 +56,6 @@ public class AutomationMapper {
         automation.setHousehold(household);
         automation.setCreatedBy(createdBy);
         automation.setCreatedAt(LocalDateTime.now());
-
-        if (request.getTriggers() != null) {
-            List<AutomationTrigger> triggers = request.getTriggers().stream()
-                    .map(automationTriggerMapper::fromRequestToEntity)
-                    .collect(Collectors.toList());
-            triggers.forEach(t -> t.setAutomation(automation));
-            automation.setTriggers(triggers);
-        }
-
-        if (request.getConditions() != null) {
-            List<AutomationCondition> conditions = request.getConditions().stream()
-                    .map(automationConditionMapper::fromRequestToEntity)
-                    .collect(Collectors.toList());
-            conditions.forEach(c -> c.setAutomation(automation));
-            automation.setConditions(conditions);
-        }
-
-        if (request.getActions() != null) {
-            List<AutomationAction> actions = request.getActions().stream()
-                    .map(automationActionMapper::fromRequestToEntity)
-                    .collect(Collectors.toList());
-
-            /**
-             * Cette boucle me permet d'attribuer un ordre si aucun ordre n'est renseigné pour une action
-             * En effet aucun ordre renseigné -> 0 / 0 devient la position +1
-             * **/
-            for (int i = 0; i < actions.size(); i++) {
-                if (actions.get(i).getExecutionOrder() == 0) {
-                    actions.get(i).setExecutionOrder(i + 1);
-                }
-                actions.get(i).setAutomation(automation);
-            }
-            automation.setActions(actions);
-        }
-
         return automation;
     }
 

@@ -2,6 +2,7 @@ package be.duft.easier_household.bll.services;
 
 import be.duft.easier_household.dl.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dl.repositories.HouseholdRepository;
+import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Household;
 import be.duft.easier_household.dl.entities.HouseholdMember;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
+    private final DeviceRepository deviceRepository;
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
 
@@ -31,14 +33,14 @@ public class RoomService {
     public RoomResponse findById(Long id) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id" + id));
-        return roomMapper.FromEntityToResponse(room);
+        return toResponse(room);
     }
 
 //    @Transactional(readOnly = true)
 //    public List<RoomResponse> findAll() {
 //        return roomRepository.findAll()
 //                .stream()
-//                .map(roomMapper::FromEntityToResponse)
+//                .map(this::toResponse)
 //                .toList();
 //    }
 
@@ -48,7 +50,7 @@ public class RoomService {
         checkMembership(userId, householdId);
         return roomRepository.findAllByHouseholdId(householdId)
                 .stream()
-                .map(roomMapper::FromEntityToResponse)
+                .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -61,7 +63,7 @@ public class RoomService {
 
         Room room = roomMapper.FromRequestToEntity(request);
         room.setHousehold(household);
-        return roomMapper.FromEntityToResponse(roomRepository.save(room));
+        return toResponse(roomRepository.save(room));
     }
 
     public RoomResponse updateRoom(Long id, RoomRequest request, Long householdId, Long userId) {
@@ -72,7 +74,7 @@ public class RoomService {
         checkMembership(userId, householdId);
 
         roomMapper.updateEntityFromRequest(request, room);
-        return roomMapper.FromEntityToResponse(roomRepository.save(room));
+        return toResponse(roomRepository.save(room));
     }
 
     public void deleteRoom(Long id, Long householdId, Long userId) {
@@ -94,4 +96,8 @@ public class RoomService {
         }
     }
 
+
+    private RoomResponse toResponse(Room room) {
+        return roomMapper.FromEntityToResponse(room, deviceRepository.countByAssignedRoom_Id(room.getId()));
+    }
 }

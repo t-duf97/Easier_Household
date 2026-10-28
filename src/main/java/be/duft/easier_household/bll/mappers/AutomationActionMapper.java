@@ -1,17 +1,13 @@
 package be.duft.easier_household.bll.mappers;
 
-import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.entities.AutomationAction;
+import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.api.dtos.request.AutomationActionRequest;
 import be.duft.easier_household.api.dtos.response.AutomationActionResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class AutomationActionMapper {
-
-    private final DeviceRepository deviceRepository;
 
     public AutomationActionResponse fromEntityToResponse (AutomationAction action){
         AutomationActionResponse response = new AutomationActionResponse();
@@ -24,29 +20,32 @@ public class AutomationActionMapper {
         response.setNotificationMsg(action.getNotificationMsg());
         response.setDelayInSeconds(action.getDelayInSeconds());
 
+        if (action.getAutomation() != null) {
+            response.setAutomationId(action.getAutomation().getId());
+        }
         // Device optionnel : SEND_NOTIFICATION et WAIT n'en ont pas.
         if (action.getDevice() != null) {
             response.setDeviceId(action.getDevice().getId());
+            response.setDeviceName(action.getDevice().getName());
         }
         return response;
 
     }
 
-    public AutomationAction fromRequestToEntity(AutomationActionRequest request){
+    /**
+     * @param device le device référencé par {@code request.deviceId}, déjà résolu par le service (null si aucun)
+     * @return une action dont l'executionOrder vaut 0 s'il n'est pas renseigné (le service lui attribue sa position)
+     */
+    public AutomationAction fromRequestToEntity(AutomationActionRequest request, Device device){
         AutomationAction action = new AutomationAction();
 
-        action.setExecutionOrder(request.getExecutionOrder() != null ? request.getExecutionOrder() : 1);
+        action.setExecutionOrder(request.getExecutionOrder() != null ? request.getExecutionOrder() : 0);
         action.setType(request.getType());
         action.setTargetValue(request.getTargetValue());
         action.setNotificationMsg(request.getNotificationMsg());
         action.setDelayInSeconds(request.getDelayInSeconds() != null ? request.getDelayInSeconds() : 0);
         action.setStatus(request.getStatus());
-
-        if (request.getDeviceId() != null) {
-            deviceRepository.findById(request.getDeviceId())
-                    .ifPresent(action::setDevice);
-        }
-
+        action.setDevice(device);
         return action;
 
     }

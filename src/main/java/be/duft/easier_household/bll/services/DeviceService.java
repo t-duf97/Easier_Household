@@ -17,11 +17,13 @@ import be.duft.easier_household.api.dtos.request.DeviceStateRequest;
 import be.duft.easier_household.api.dtos.response.DeviceResponse;
 import be.duft.easier_household.api.dtos.response.DeviceStateResponse;
 import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
+import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
 import be.duft.easier_household.bll.events.DeviceValueChangedEvent;
 import be.duft.easier_household.bll.mappers.DeviceMapper;
+import be.duft.easier_household.dl.enums.ChangeSource;
 import be.duft.easier_household.dl.enums.DeviceStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +69,9 @@ public class DeviceService {
 
     public DeviceResponse create(DeviceRequest request, Long roomId, Long userId){
         Room room = accessibleRoom(roomId, userId);
+        if (request.getName() == null || request.getName().isBlank() || request.getType() == null) {
+            throw new InvalidRequestException("name and type are required");
+        }
         Device device = deviceMapper.FromRequestToEntity(request, room);
         deviceRepository.save(device);
         roomRepository.save(room);
@@ -132,9 +137,7 @@ public class DeviceService {
         if (request.getValue() != null) {
             state.setValue(request.getValue());
         } else { state.setValue(device.getCurrentValue());}
-        if (request.getSource() != null) {
-        state.setChangeSource(request.getSource());
-        }
+        state.setChangeSource(ChangeSource.MANUAL);
         deviceStateRepository.save(state);
 
 

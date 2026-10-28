@@ -56,7 +56,7 @@ public class DeviceController extends BaseController {
 
     @DeleteMapping("/devices/{id}")
     public ResponseEntity<DeviceResponse> deleteDevice(@PathVariable Long id){
-        deviceService.deleteDevice(id);
+        deviceService.deleteDevice(id, getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
 

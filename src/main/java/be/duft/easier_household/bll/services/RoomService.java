@@ -26,6 +26,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
     private final DeviceRepository deviceRepository;
+    private final DeviceService deviceService;
     private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
 
@@ -84,6 +85,7 @@ public class RoomService {
 
         checkMembership(userId, householdId);
 
+        deviceService.deleteWithReferences(deviceRepository.findByAssignedRoom_Id(id));
         roomRepository.delete(room);
     }
 

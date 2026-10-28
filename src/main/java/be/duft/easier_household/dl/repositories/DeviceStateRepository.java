@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 
 @Repository
 public interface DeviceStateRepository extends BaseRepository<DeviceState, Long> {
@@ -14,7 +15,7 @@ public interface DeviceStateRepository extends BaseRepository<DeviceState, Long>
 
     public boolean existsByDeviceIdAndChangedAtAfter (Long deviceId, LocalDateTime changedAt);
 
-    public void deleteByDeviceId(Long deviceId);
-
     public void deleteByDevice_AssignedRoom_Household_Id(Long householdId);
+
+    public void deleteByDeviceIdIn(Collection<Long> deviceIds);
 }

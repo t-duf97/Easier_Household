@@ -1,9 +1,13 @@
 package be.duft.easier_household.bll.services;
 
 
+import be.duft.easier_household.dl.repositories.AutomationRepository;
+import be.duft.easier_household.dl.repositories.DeviceIntegrationRepository;
 import be.duft.easier_household.dl.repositories.DeviceRepository;
 import be.duft.easier_household.dl.repositories.DeviceStateRepository;
+import be.duft.easier_household.dl.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dl.repositories.RoomRepository;
+import be.duft.easier_household.dl.entities.Automation;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
 import be.duft.easier_household.dl.entities.Room;
@@ -13,6 +17,7 @@ import be.duft.easier_household.api.dtos.response.DeviceResponse;
 import be.duft.easier_household.api.dtos.response.DeviceStateResponse;
 import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
+import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.events.DeviceStatusChangedEvent;
 import be.duft.easier_household.bll.mappers.DeviceMapper;
 import be.duft.easier_household.dl.enums.DeviceStatus;
@@ -37,6 +42,9 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
     private final RoomRepository roomRepository;
     private final DeviceStateRepository deviceStateRepository;
+    private final DeviceIntegrationRepository deviceIntegrationRepository;
+    private final AutomationRepository automationRepository;
+    private final HouseholdMemberRepository householdMemberRepository;
     private final DeviceMapper deviceMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -80,12 +88,35 @@ public class DeviceService {
     }
 
 
-    public void deleteDevice(Long id) {
+    public void deleteDevice(Long id, Long userId) {
         Device device = deviceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
 
-        deviceStateRepository.deleteByDeviceId(id);
-        deviceRepository.delete(device);
+        Long householdId = device.getAssignedRoom().getHousehold().getId();
+        householdMemberRepository.findByHouseholdIdAndUserId(householdId, userId)
+                .orElseThrow(() -> new UnauthorizedAccessException("User is not a member of this household"));
+
+        deleteWithReferences(List.of(device));
+    }
+
+    /**
+     * Supprime les devices avec leur historique, leur intégration et <b>toute automatisation</b> qui en référence un
+     * (trigger, condition ou action). L'automatisation entière est supprimée : retirer seulement une condition
+     * la rendrait moins restrictive à l'insu de l'utilisateur.
+     */
+    public void deleteWithReferences(List<Device> devices) {
+        if (devices.isEmpty()) {
+            return;
+        }
+        List<Long> deviceIds = devices.stream().map(Device::getId).toList();
+
+        List<Automation> automations = automationRepository.findReferencingDevices(deviceIds);
+        automations.forEach(a -> log.info("Deleting automation '{}' (id={}) : it references a deleted device",
+                a.getName(), a.getId()));
+        automationRepository.deleteAll(automations);
+        deviceStateRepository.deleteByDeviceIdIn(deviceIds);
+        deviceIntegrationRepository.deleteByDeviceIdIn(deviceIds);
+        deviceRepository.deleteAll(devices);
     }
 
     public DeviceResponse changeState(Long id, DeviceStateRequest request){

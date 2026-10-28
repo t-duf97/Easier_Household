@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 
 @Repository
@@ -57,6 +58,20 @@ public interface AutomationRepository extends BaseRepository<Automation, Long> {
             @Param("deviceId") Long deviceId,
             @Param("status") DeviceStatus status
     );
+
+    /**
+     * Automatisations dont au moins un trigger, une condition ou une action vise l'un de ces devices.
+     */
+    @Query("""
+            SELECT DISTINCT a FROM Automation a
+                LEFT JOIN a.triggers t
+                LEFT JOIN a.conditions c
+                LEFT JOIN a.actions ac
+                WHERE t.device.id IN :deviceIds
+                   OR c.device.id IN :deviceIds
+                   OR ac.device.id IN :deviceIds
+            """)
+    List<Automation> findReferencingDevices(@Param("deviceIds") Collection<Long> deviceIds);
 
 
 

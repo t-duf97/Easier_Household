@@ -21,4 +21,16 @@ public interface AutomationTriggerRepository extends BaseRepository<AutomationTr
                 AND t.device.id = :deviceId
             """)
     List<AutomationTrigger> findEnabledSensorThresholdTriggers(@Param("deviceId") Long deviceId);
+
+    /**
+     * Triggers TIME définis par une expression cron, dans des automatisations actives.
+     */
+    @Query("""
+            SELECT t FROM AutomationTrigger t
+                JOIN FETCH t.automation a
+                WHERE a.isEnabled = true
+                AND t.type = 'TIME'
+                AND t.cronExpression IS NOT NULL
+            """)
+    List<AutomationTrigger> findEnabledCronTriggers();
 }

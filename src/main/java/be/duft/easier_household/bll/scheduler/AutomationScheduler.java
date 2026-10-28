@@ -25,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @Slf4j
@@ -114,9 +115,14 @@ public class AutomationScheduler {
         LocalTime minute = at.toLocalTime().truncatedTo(ChronoUnit.MINUTES);
         String today = at.getDayOfWeek().name().substring(0, 3);
 
-        List<Long> automationIds = newTransaction.execute(status -> automationRepository
-                .findEnabledAutomationsWithTimeTrigger(minute, today)
-                .stream().map(Automation::getId).toList());
+        List<Long> automationIds = newTransaction.execute(status -> Stream.concat(
+                        automationRepository.findEnabledAutomationsWithTimeTrigger(minute, today).stream()
+                                .map(Automation::getId),
+                        automationTriggerRepository.findEnabledCronTriggers().stream()
+                                .filter(t -> CronSchedule.matchesMinute(t.getCronExpression(), at))
+                                .map(t -> t.getAutomation().getId()))
+                .distinct()
+                .toList());
 
         log.info("Found {} TIME automations to evaluate at {}", automationIds.size(), minute);
 

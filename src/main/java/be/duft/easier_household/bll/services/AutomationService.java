@@ -10,6 +10,7 @@ import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.mappers.AutomationActionMapper;
+import be.duft.easier_household.bll.scheduler.CronSchedule;
 import be.duft.easier_household.bll.mappers.AutomationConditionMapper;
 import be.duft.easier_household.bll.mappers.AutomationMapper;
 import be.duft.easier_household.bll.mappers.AutomationTriggerMapper;
@@ -159,8 +160,13 @@ public class AutomationService {
                 }
             }
             case TIME -> {
-                if (trigger.getTimeValue() == null) {
-                    throw new InvalidRequestException("TIME trigger requires timeValue");
+                boolean hasTime = trigger.getTimeValue() != null;
+                boolean hasCron = trigger.getCronExpression() != null && !trigger.getCronExpression().isBlank();
+                if (hasTime == hasCron) {
+                    throw new InvalidRequestException("TIME trigger requires either timeValue or cronExpression, not both");
+                }
+                if (hasCron && !CronSchedule.isValid(trigger.getCronExpression())) {
+                    throw new InvalidRequestException("Invalid cronExpression: " + trigger.getCronExpression());
                 }
             }
             case SENSOR_THRESHOLD -> {

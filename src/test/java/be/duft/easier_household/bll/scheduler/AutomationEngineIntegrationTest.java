@@ -176,6 +176,28 @@ class AutomationEngineIntegrationTest {
     }
 
     @Test
+    void cronTrigger_runsOnMatchingMinutesOnly() {
+        Device lamp = device("Lampe");
+        Automation automation = automation("Toutes les 15 min, le matin en semaine");
+        AutomationTrigger trigger = new AutomationTrigger();
+        trigger.setAutomation(automation);
+        trigger.setType(TriggerType.TIME);
+        trigger.setCronExpression("*/15 7 * * MON-FRI");
+        automation.getTriggers().add(trigger);
+        automation.getActions().add(setStatusAction(automation, lamp, DeviceStatus.ON, 1));
+        automationRepository.save(automation);
+
+        LocalDateTime wednesday = LocalDateTime.of(2026, 10, 28, 7, 0);
+
+        automationScheduler.evaluateTimeBasedAutomations(wednesday.withMinute(16));
+        automationScheduler.evaluateTimeBasedAutomations(wednesday.plusDays(3).withMinute(30));
+        assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.OFF);
+
+        automationScheduler.evaluateTimeBasedAutomations(wednesday.withMinute(30).withSecond(5));
+        assertThat(statusOf(lamp)).isEqualTo(DeviceStatus.ON);
+    }
+
+    @Test
     void timeTrigger_runsDuringItsMinuteOnly() {
         Device lamp = device("Lampe");
         Automation automation = automation("Réveil 07:15");

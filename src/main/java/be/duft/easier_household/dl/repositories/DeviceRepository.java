@@ -18,5 +18,7 @@ public interface DeviceRepository extends BaseRepository<Device, Long> {
         List<Device> findByTypeAndAssignedRoom_Household_Id(DeviceType deviceType, Long householdId);
 
         List<Device> findByType(DeviceType deviceType);
+
+        void deleteByAssignedRoom_Household_Id(Long householdId);
     }
 

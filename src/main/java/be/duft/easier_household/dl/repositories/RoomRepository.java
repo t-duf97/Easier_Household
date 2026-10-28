@@ -11,4 +11,6 @@ public interface RoomRepository extends BaseRepository<Room, Long> {
     Room findByHouseholdId(Long householdId);
 
     List<Room> findAllByHouseholdId(Long householdId);
+
+    void deleteByHouseholdId(Long householdId);
 }

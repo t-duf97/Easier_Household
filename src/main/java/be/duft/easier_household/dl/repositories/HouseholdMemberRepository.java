@@ -17,4 +17,6 @@ public interface HouseholdMemberRepository extends BaseRepository<HouseholdMembe
     List<HouseholdMember> findByUserId(Long userId);
 
     Optional<HouseholdMember> findByHouseholdIdAndUserId(Long householdId, Long userId);
+
+    void deleteByHouseholdId(Long householdId);
 }

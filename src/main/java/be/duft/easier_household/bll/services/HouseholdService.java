@@ -1,5 +1,9 @@
 package be.duft.easier_household.bll.services;
 
+import be.duft.easier_household.dl.repositories.AutomationRepository;
+import be.duft.easier_household.dl.repositories.DeviceIntegrationRepository;
+import be.duft.easier_household.dl.repositories.DeviceRepository;
+import be.duft.easier_household.dl.repositories.DeviceStateRepository;
 import be.duft.easier_household.dl.repositories.HouseholdMemberRepository;
 import be.duft.easier_household.dl.repositories.HouseholdRepository;
 import be.duft.easier_household.dl.repositories.RoomRepository;
@@ -16,6 +20,7 @@ import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.mappers.HouseholdMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +34,10 @@ public class HouseholdService {
     private final HouseholdRepository householdRepository;
     private final RoomRepository roomRepository;
     private final HouseholdMemberRepository householdMemberRepository;
+    private final AutomationRepository automationRepository;
+    private final DeviceRepository deviceRepository;
+    private final DeviceStateRepository deviceStateRepository;
+    private final DeviceIntegrationRepository deviceIntegrationRepository;
     private final HouseholdMapper householdMapper;
     private final UserService userService;
 
@@ -82,12 +91,24 @@ public class HouseholdService {
 
     }
 
+    /**
+     * Supprime le foyer et tout ce qui en dépend, dans l'ordre des clés étrangères :
+     * automatisations (triggers/conditions/actions en cascade, qui référencent des devices),
+     * historique et intégrations des devices, devices, pièces, membres, puis le foyer.
+     */
+    @Transactional
     public void delete(Long id, Long userId) {
         Household household = householdRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
 
         checkOwnership(household, userId);
 
+        automationRepository.deleteAll(automationRepository.findByHouseholdId(id));
+        deviceStateRepository.deleteByDevice_AssignedRoom_Household_Id(id);
+        deviceIntegrationRepository.deleteByDevice_AssignedRoom_Household_Id(id);
+        deviceRepository.deleteByAssignedRoom_Household_Id(id);
+        roomRepository.deleteByHouseholdId(id);
+        householdMemberRepository.deleteByHouseholdId(id);
         householdRepository.delete(household);
     }
 

@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DeviceIntegrationRepository extends BaseRepository<DeviceIntegration, Long> {
+
+    void deleteByDevice_AssignedRoom_Household_Id(Long householdId);
 }

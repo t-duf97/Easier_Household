@@ -15,4 +15,6 @@ public interface DeviceStateRepository extends BaseRepository<DeviceState, Long>
     public boolean existsByDeviceIdAndChangedAtAfter (Long deviceId, LocalDateTime changedAt);
 
     public void deleteByDeviceId(Long deviceId);
+
+    public void deleteByDevice_AssignedRoom_Household_Id(Long householdId);
 }

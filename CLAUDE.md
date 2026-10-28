@@ -42,7 +42,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - `Room` : name (unique **par foyer** : contrainte `uk_room_household_name`), floor, roomType (`RoomType`), household→Household.
 - `Device` (table `device`) : name, type (`DeviceType`), currentValue (String), isOnline, status (`DeviceStatus`), assignedRoom→Room (@JoinColumn `roomId`).
 - `DeviceState` : status, value, changeSource (`ChangeSource`), changedAt, user→User, device→Device.
-- `DeviceIntegration` : provider, device→Device (@OneToOne), externalDeviceId, credentialsRef, extraConfig. **Entité présente mais non exploitée** (controller vide).
+- `DeviceIntegration` : provider, device→Device (@OneToOne, sans cascade), externalDeviceId, credentialsRef (référence vers les identifiants, pas le secret), extraConfig. Relie un device de l'app à un appareil réel d'un écosystème externe. **Entité seule, sans controller ni service** : sera conçue avec la tâche 6.
 - `Automation` : name, description, logic (`ConditionLogic` ALL/ANY), isEnabled, lastTriggeredAt, createdBy→User, household→Household, + listes `triggers` / `conditions` / `actions` (cascade ALL, orphanRemoval).
 - `AutomationTrigger` : type (`TriggerType`), timeValue, daysOfWeek (String), status, thresholdValue, thresholdOperator, cronExpression, device. Champs requis par type validés à la création (`AutomationService.validateTrigger`) : DEVICE_STATE_CHANGE → device+status ; TIME → timeValue **ou** cronExpression ; SENSOR_THRESHOLD → device+thresholdValue+thresholdOperator ; SUNRISE/SUNSET → foyer avec position.
 - `AutomationCondition` : type (`ConditionType`), status, thresholdValue, thresholdOperator, timeFrom/timeTo, daysOfWeek, durationInMinutes, device.
@@ -56,7 +56,6 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - Rooms : `GET /rooms/{id}`, `PUT /rooms/{id}`, `DELETE /rooms/{id}`, `POST /households/{householdId}/rooms`, `GET /households/{householdId}/rooms`.
 - Devices : `GET /devices/{id}`, `GET /rooms/{roomId}/devices`, `POST /rooms/{roomId}/devices`, `PATCH /devices/{id}`, `DELETE /devices/{id}`, `PATCH /devices/{id}/state`, `GET /devices/{id}/history` (pagination **`Page<DeviceStateResponse>`** via `?page=&pageSize=`).
 - Automations : `POST /households/{householdId}/automations`, `GET /households/{householdId}/automations`, `GET /automations/{id}`, `PATCH /automations/{id}/toggle`, **`PUT /automations/{id}` (existe déjà, implémenté)**, `DELETE /automations/{id}`.
-- `DeviceIntegrationController` : **vide, aucun endpoint.**
 
 **Moteur d'automatisations** (`bll/scheduler/AutomationScheduler`)
 - Réactif : `DeviceService.changeState` publie `DeviceStatusChangedEvent` (seulement si le statut change) ; `onDeviceStatusChanged` l'écoute en `@TransactionalEventListener(AFTER_COMMIT)`.
@@ -111,7 +110,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - [x] **Mappers qui injectent un repository** (`AutomationTriggerMapper`, `AutomationActionMapper`), contraire à la convention ; la réponse d'action renvoie `deviceName`/`automationId` à `null`.
 - [x] **Supprimer un device ou une pièce encore référencés** : `DeviceService.deleteDevice` ne retire pas les triggers/conditions/actions qui visent le device, et `RoomService.deleteRoom` ne supprime pas les devices de la pièce → violation de clé étrangère (500). Décidé : on supprime les automatisations qui les référencent.
 - [x] **Swagger** : `/v3/api-docs` (chemin par défaut de springdoc) n'est pas dans les `permitAll` de `SecurityConfig` (seul `/api-docs/**` l'est).
-- [ ] **`DeviceIntegrationController` vide** : soit l'implémenter (CRUD minimal), soit le supprimer tant qu'inutilisé, pour ne pas exposer une coquille.
+- [x] **`DeviceIntegrationController` vide** : supprimé avec son service et son DTO (décision du 2026-10-28, cf. tâche 6). La cascade ALL de l'intégration vers le device est retirée.
 - [x] **Secrets en clair dans `application.yaml`** : le fichier n'est plus suivi par git (il l'était malgré le `.gitignore`) ; `application.example.yaml` versionné utilise des variables d'environnement. Choix assumé : valeurs en clair dans le yaml local, variables d'environnement le jour d'un déploiement.
 
 ### Finitions
@@ -131,9 +130,11 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 2. ✅ **Fiabiliser le moteur d'automatisations.** Corriger les 3 bugs bloquants ci-dessus (SET_DEVICE_VALUE, transaction du cron, status null), puis ajouter des tests : au moins un test d'intégration qui crée une automation TIME et une DEVICE_STATE_CHANGE et vérifie l'exécution.
 2bis. ✅ **Corrections rapides.** DELETE household, cascade DeviceState, JWT dans les logs, Swagger, mappers sans repository (+ contrôle d'appartenance des devices), conditions sans device.
 3. ✅ **Rendre le simulateur de capteurs cohérent.** Valeurs numériques réalistes pour `SENSOR_TEMP` (ex. 18–25 °C écrites dans `currentValue`), simulateur de mouvement séparé pour `SENSOR_MOTION`, `ChangeSource.SCHEDULED`. Objectif : que les conditions `SENSOR_VALUE` deviennent testables de bout en bout.
-4. **Décider le sort de `DeviceIntegration`.** Soit CRUD complet (controller + service + DTO + mapper + ownership), soit suppression propre. Documenter le choix.
+4. ➡️ **Décider le sort de `DeviceIntegration`.** Décidé le 2026-10-28 : pas de CRUD sans consommateur ; entité conservée, controller/service supprimés, conception **fusionnée dans la tâche 6**.
 5. **Tests d'intégration des endpoints.** Couvrir auth (register/login + accès protégé), households et devices avec `@WebMvcTest`/`spring-security-test` et un `@DataJpaTest` pour les queries custom d'`AutomationRepository`.
 6. **(Plus tard) Brancher une vraie source de capteurs.** L'archi hexagonale est déjà prête : écrire un nouvel adaptateur de `SensorStatePort` (REST polling ou webhook) à la place/à côté de `JpaSensorStateAdapter`, taguer les états ingérés `ChangeSource.EXTERNAL_API`, sécuriser par clé de service (pas le JWT user), idempotence, garde-fou anti-boucle. C'est le « lien API capteurs » — à ne faire qu'une fois 1–5 au vert.
+   - **Inclut `DeviceIntegration`** (ex-tâche 4), dans les deux sens : *lecture* (relevés réels → `SensorReadingService` avec `ChangeSource.EXTERNAL_API`) et *commande* (aujourd'hui une action `SET_DEVICE_STATUS` ne change que la base : il faudra un port `DeviceCommandPort` + un adaptateur par fournisseur, appelé par le moteur et par `PATCH /devices/{id}/state`).
+   - **Premier point de la tâche : discuter avec l'utilisateur du choix des appareils / fournisseurs** (Hue, Shelly, Tuya, Home Assistant…). Aucun n'est choisi au 2026-10-28, et la forme de `DeviceIntegration` (appairage, credentials, config) en dépend.
 
 ---
 

@@ -42,7 +42,7 @@ public class DeviceState extends BaseEntity {
     @Getter @Setter
     private User user;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="device_id")
     @Getter @Setter
     private Device device;

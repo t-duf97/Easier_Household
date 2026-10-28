@@ -13,4 +13,8 @@ public interface RoomRepository extends BaseRepository<Room, Long> {
     List<Room> findAllByHouseholdId(Long householdId);
 
     void deleteByHouseholdId(Long householdId);
+
+    boolean existsByHouseholdIdAndName(Long householdId, String name);
+
+    boolean existsByHouseholdIdAndNameAndIdNot(Long householdId, String name, Long id);
 }

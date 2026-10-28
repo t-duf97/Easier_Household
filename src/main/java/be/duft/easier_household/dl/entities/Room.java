@@ -11,11 +11,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"household"}, callSuper = false)
 @ToString(exclude = {"household"})
-@Table(name="room")
+@Table(name="room", uniqueConstraints = @UniqueConstraint(
+        name = "uk_room_household_name", columnNames = {"household_id", "name"}))
 public class Room extends BaseEntity {
 
     @Getter @Setter
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @Getter @Setter

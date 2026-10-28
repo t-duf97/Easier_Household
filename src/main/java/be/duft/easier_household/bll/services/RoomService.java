@@ -9,6 +9,7 @@ import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.entities.Room;
 import be.duft.easier_household.api.dtos.request.RoomRequest;
 import be.duft.easier_household.api.dtos.response.RoomResponse;
+import be.duft.easier_household.bll.exceptions.ResourceAlreadyExistsException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.mappers.RoomMapper;
@@ -61,6 +62,9 @@ public class RoomService {
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found with id" + householdId));
 
         checkMembership(userId, householdId);
+        if (roomRepository.existsByHouseholdIdAndName(householdId, request.getName())) {
+            throw new ResourceAlreadyExistsException("A room named '" + request.getName() + "' already exists in this household");
+        }
 
         Room room = roomMapper.FromRequestToEntity(request);
         room.setHousehold(household);
@@ -73,6 +77,10 @@ public class RoomService {
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id" + id));
 
         checkMembership(userId, householdId);
+        if (request.getName() != null
+                && roomRepository.existsByHouseholdIdAndNameAndIdNot(householdId, request.getName(), id)) {
+            throw new ResourceAlreadyExistsException("A room named '" + request.getName() + "' already exists in this household");
+        }
 
         roomMapper.updateEntityFromRequest(request, room);
         return toResponse(roomRepository.save(room));

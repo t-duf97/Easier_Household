@@ -160,16 +160,16 @@ public class AutomationScheduler {
                 Device device = deviceRepository.findById(action.getDevice().getId()).orElse(null);
                 if (device == null) return;
 
+                if (action.getStatus() == null) {
+                    log.warn("Automation '{}': SET_DEVICE_STATUS action {} has no target status",
+                            automation.getName(), action.getId());
+                    return;
+                }
+
                 device.setStatus(action.getStatus());
                 device.setUpdatedAt(LocalDateTime.now());
                 deviceRepository.save(device);
-
-                DeviceState deviceState = new DeviceState();
-                deviceState.setDevice(device);
-                deviceState.setValue(action.getTargetValue());
-                deviceState.setChangeSource(ChangeSource.AUTOMATION);
-                deviceState.setChangedAt(LocalDateTime.now());
-                deviceStateRepository.save(deviceState);
+                recordState(device);
 
                 log.info("Action executed : Device '{}' status set to {} by automation '{}'",
                         device.getName(), action.getStatus(), automation.getName());
@@ -182,19 +182,12 @@ public class AutomationScheduler {
                 device.setCurrentValue(action.getTargetValue());
                 device.setUpdatedAt(LocalDateTime.now());
                 deviceRepository.save(device);
-
-                DeviceState deviceState = deviceStateRepository.findById(action.getDevice().getId()).orElse(null);
-                if (deviceState == null) return;
-                deviceState.setValue(action.getTargetValue());
-                deviceState.setChangeSource(ChangeSource.AUTOMATION);
-                deviceState.setChangedAt(LocalDateTime.now());
-                deviceStateRepository.save(deviceState);
+                recordState(device);
 
                 log.info("Action executed : Device '{}' value set to {} by automation '{}'",
                         device.getName(), action.getTargetValue(), automation.getName());
             }
             case SEND_NOTIFICATION -> {
-                if (action.getDevice() == null) return;
                 log.info("[NOTIFICATION from '{}'] {}", automation.getName(), action.getNotificationMsg());
             }
 
@@ -210,6 +203,19 @@ public class AutomationScheduler {
                 }
             }
         }
+    }
+
+    /**
+     * Historise l'état courant du device (statut + valeur) comme un changement fait par une automatisation.
+     */
+    private void recordState(Device device) {
+        DeviceState state = new DeviceState();
+        state.setDevice(device);
+        state.setStatus(device.getStatus());
+        state.setValue(device.getCurrentValue());
+        state.setChangeSource(ChangeSource.AUTOMATION);
+        state.setChangedAt(LocalDateTime.now());
+        deviceStateRepository.save(state);
     }
 }
 

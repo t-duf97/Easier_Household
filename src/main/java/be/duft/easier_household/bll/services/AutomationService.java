@@ -4,7 +4,9 @@ import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.Role;
 import be.duft.easier_household.api.dtos.request.AutomationActionRequest;
 import be.duft.easier_household.api.dtos.request.AutomationRequest;
+import be.duft.easier_household.api.dtos.request.AutomationTriggerRequest;
 import be.duft.easier_household.api.dtos.response.AutomationResponse;
+import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
 import be.duft.easier_household.bll.mappers.AutomationActionMapper;
@@ -48,13 +50,6 @@ public class AutomationService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new ResourceNotFoundException("User not found"));
-
-        if (request.getTriggers() == null || request.getTriggers().isEmpty()) {
-            throw new IllegalArgumentException("At least one trigger is required");
-        }
-        if (request.getActions() == null || request.getActions().isEmpty()) {
-            throw new IllegalArgumentException("At least one action is required");
-        }
 
         Automation automation = automationMapper.fromRequestToEntity(request, household, user);
         replaceChildren(automation, request);
@@ -100,22 +95,30 @@ public class AutomationService {
     /**
      * Remplace triggers, conditions et actions de l'automatisation par ceux de la requête.
      * Chaque device référencé doit appartenir au foyer de l'automatisation.
+     *
+     * @throws InvalidRequestException s'il manque un trigger ou une action, ou si un trigger est incomplet
      */
     private void replaceChildren(Automation automation, AutomationRequest request) {
         Long householdId = automation.getHousehold().getId();
+
+        if (request.getTriggers() == null || request.getTriggers().isEmpty()) {
+            throw new InvalidRequestException("At least one trigger is required");
+        }
+        if (request.getActions() == null || request.getActions().isEmpty()) {
+            throw new InvalidRequestException("At least one action is required");
+        }
+        request.getTriggers().forEach(t -> validateTrigger(t, automation.getHousehold()));
 
         automation.getTriggers().clear();
         automation.getConditions().clear();
         automation.getActions().clear();
 
-        if (request.getTriggers() != null) {
-            request.getTriggers().forEach(t -> {
-                AutomationTrigger trigger = automationTriggerMapper.fromRequestToEntity(
-                        t, resolveDevice(t.getDeviceId(), householdId));
-                trigger.setAutomation(automation);
-                automation.getTriggers().add(trigger);
-            });
-        }
+        request.getTriggers().forEach(t -> {
+            AutomationTrigger trigger = automationTriggerMapper.fromRequestToEntity(
+                    t, resolveDevice(t.getDeviceId(), householdId));
+            trigger.setAutomation(automation);
+            automation.getTriggers().add(trigger);
+        });
         if (request.getConditions() != null) {
             request.getConditions().forEach(c -> {
                 AutomationCondition condition = automationConditionMapper.fromRequestToEntity(
@@ -139,6 +142,28 @@ public class AutomationService {
                 action.setAutomation(automation);
                 automation.getActions().add(action);
             }
+        }
+    }
+
+    /**
+     * Vérifie qu'un trigger porte les champs dont son type a besoin pour être évalué par le moteur.
+     */
+    private void validateTrigger(AutomationTriggerRequest trigger, Household household) {
+        if (trigger.getType() == null) {
+            throw new InvalidRequestException("Trigger type is required");
+        }
+        switch (trigger.getType()) {
+            case DEVICE_STATE_CHANGE -> {
+                if (trigger.getDeviceId() == null || trigger.getStatus() == null) {
+                    throw new InvalidRequestException("DEVICE_STATE_CHANGE trigger requires deviceId and status");
+                }
+            }
+            case TIME -> {
+                if (trigger.getTimeValue() == null) {
+                    throw new InvalidRequestException("TIME trigger requires timeValue");
+                }
+            }
+            default -> throw new InvalidRequestException(trigger.getType() + " triggers are not supported yet");
         }
     }
 

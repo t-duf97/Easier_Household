@@ -2,6 +2,7 @@ package be.duft.easier_household.api.exceptions;
 
 import be.duft.easier_household.api.dtos.response.ErrorReponse;
 import be.duft.easier_household.bll.exceptions.DeviceUnavailableException;
+import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceAlreadyExistsException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.bll.exceptions.UnauthorizedAccessException;
@@ -23,6 +24,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorReponse> handleNotFound(
             ResourceNotFoundException ex, HttpServletRequest request) {
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorReponse> handleInvalidRequest(
+            InvalidRequestException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(ResourceAlreadyExistsException.class)

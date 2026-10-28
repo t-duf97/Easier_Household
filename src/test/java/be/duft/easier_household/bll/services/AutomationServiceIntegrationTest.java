@@ -6,6 +6,7 @@ import be.duft.easier_household.api.dtos.request.AutomationRequest;
 import be.duft.easier_household.api.dtos.request.AutomationTriggerRequest;
 import be.duft.easier_household.api.dtos.response.AutomationActionResponse;
 import be.duft.easier_household.api.dtos.response.AutomationResponse;
+import be.duft.easier_household.bll.exceptions.InvalidRequestException;
 import be.duft.easier_household.bll.exceptions.ResourceNotFoundException;
 import be.duft.easier_household.dl.embeddable.HouseholdMemberId;
 import be.duft.easier_household.dl.entities.*;
@@ -78,6 +79,34 @@ class AutomationServiceIntegrationTest {
         assertThat(response.getActions().getFirst().getStatus()).isEqualTo(DeviceStatus.OFF);
         assertThat(response.getActions()).allSatisfy(a -> assertThat(a.getAutomationId()).isEqualTo(response.getId()));
         assertThat(response.getTriggers().getFirst().getDeviceName()).isEqualTo(lamp.getName());
+    }
+
+    @Test
+    void create_refusesMissingOrIncompleteTriggers() {
+        AutomationRequest noTrigger = request(trigger(lamp.getId()), List.of(statusAction(lamp.getId(), null)));
+        noTrigger.setTriggers(List.of());
+        assertThatThrownBy(() -> automationService.create(household.getId(), noTrigger, owner.getId()))
+                .isInstanceOf(InvalidRequestException.class);
+
+        AutomationTriggerRequest withoutStatus = trigger(lamp.getId());
+        withoutStatus.setStatus(null);
+        assertThatThrownBy(() -> automationService.create(household.getId(),
+                request(withoutStatus, List.of(statusAction(lamp.getId(), null))), owner.getId()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("status");
+    }
+
+    @Test
+    void update_cannotRemoveAllTriggers() {
+        AutomationResponse created = automationService.create(household.getId(),
+                request(trigger(lamp.getId()), List.of(statusAction(lamp.getId(), null))), owner.getId());
+
+        AutomationRequest emptied = request(trigger(lamp.getId()), List.of(statusAction(lamp.getId(), null)));
+        emptied.setTriggers(List.of());
+
+        assertThatThrownBy(() -> automationService.update(created.getId(), emptied, owner.getId()))
+                .isInstanceOf(InvalidRequestException.class);
+        assertThat(automationService.findById(created.getId(), owner.getId()).getTriggers()).hasSize(1);
     }
 
     private AutomationRequest request(AutomationTriggerRequest trigger, List<AutomationActionRequest> actions) {

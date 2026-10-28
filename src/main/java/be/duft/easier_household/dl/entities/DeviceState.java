@@ -22,6 +22,7 @@ public class DeviceState extends BaseEntity {
     @Column(nullable = true)
     private String value;
 
+    @Enumerated(EnumType.STRING)
     @Getter @Setter
     @Column
     private ChangeSource changeSource;

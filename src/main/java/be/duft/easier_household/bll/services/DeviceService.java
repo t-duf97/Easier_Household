@@ -10,6 +10,7 @@ import be.duft.easier_household.dl.repositories.RoomRepository;
 import be.duft.easier_household.dl.entities.Automation;
 import be.duft.easier_household.dl.entities.Device;
 import be.duft.easier_household.dl.entities.DeviceState;
+import be.duft.easier_household.dl.entities.HouseholdMember;
 import be.duft.easier_household.dl.entities.Room;
 import be.duft.easier_household.api.dtos.request.DeviceRequest;
 import be.duft.easier_household.api.dtos.request.DeviceStateRequest;
@@ -49,32 +50,29 @@ public class DeviceService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public DeviceResponse findById(Long id) {
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));
-        return deviceMapper.fromEntityToResponse(device);
+    public DeviceResponse findById(Long id, Long userId) {
+        return deviceMapper.fromEntityToResponse(accessibleDevice(id, userId));
     }
 
     @Transactional(readOnly = true)
-    public List<DeviceResponse> findByRoomId(Long roomId) {
+    public List<DeviceResponse> findByRoomId(Long roomId, Long userId) {
+        accessibleRoom(roomId, userId);
         return deviceRepository.findByAssignedRoom_Id(roomId)
                 .stream()
                 .map(deviceMapper::fromEntityToResponse)
                 .collect(Collectors.toList());
     }
 
-    public DeviceResponse create(DeviceRequest request, Long roomId){
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(()-> new ResourceNotFoundException("Room not found with id " + roomId));
+    public DeviceResponse create(DeviceRequest request, Long roomId, Long userId){
+        Room room = accessibleRoom(roomId, userId);
         Device device = deviceMapper.FromRequestToEntity(request, room);
         deviceRepository.save(device);
         roomRepository.save(room);
         return deviceMapper.fromEntityToResponse(device, roomId);
     }
 
-    public DeviceResponse update(Long id, DeviceRequest request) {
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
+    public DeviceResponse update(Long id, DeviceRequest request, Long userId) {
+        Device device = accessibleDevice(id, userId);
 
         if (request.getName() != null) {
             device.setName(request.getName());
@@ -89,14 +87,7 @@ public class DeviceService {
 
 
     public void deleteDevice(Long id, Long userId) {
-        Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
-
-        Long householdId = device.getAssignedRoom().getHousehold().getId();
-        householdMemberRepository.findByHouseholdIdAndUserId(householdId, userId)
-                .orElseThrow(() -> new UnauthorizedAccessException("User is not a member of this household"));
-
-        deleteWithReferences(List.of(device));
+        deleteWithReferences(List.of(accessibleDevice(id, userId)));
     }
 
     /**
@@ -119,10 +110,11 @@ public class DeviceService {
         deviceRepository.deleteAll(devices);
     }
 
-    public DeviceResponse changeState(Long id, DeviceStateRequest request){
+    public DeviceResponse changeState(Long id, DeviceStateRequest request, Long userId){
 
         Device device = deviceRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Device not found with id " + id));
+        HouseholdMember member = checkMembership(householdIdOf(device), userId);
         if (!device.isOnline()){
             throw new DeviceUnavailableException("Device is unavailable");
         }
@@ -131,6 +123,7 @@ public class DeviceService {
         DeviceState state = new DeviceState();
         state.setChangedAt(LocalDateTime.now());
         state.setDevice(device);
+        state.setUser(member.getUser());
         if (request.getStatus() != null) {
         state.setStatus(request.getStatus());} else {state.setStatus(device.getStatus());}
         if (request.getValue() != null) {
@@ -160,8 +153,40 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public Page<DeviceStateResponse> getHistory(Long deviceId, Pageable pageable) {
+    public Page<DeviceStateResponse> getHistory(Long deviceId, Pageable pageable, Long userId) {
+        accessibleDevice(deviceId, userId);
         return deviceStateRepository.findByDeviceIdOrderByChangedAtDesc(deviceId, pageable)
                 .map(deviceMapper::toStateResponse);
+    }
+
+    /**
+     * @throws ResourceNotFoundException si le device n'existe pas
+     * @throws UnauthorizedAccessException si l'utilisateur n'est pas membre du foyer du device
+     */
+    private Device accessibleDevice(Long id, Long userId) {
+        Device device = deviceRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Device not found: " + id));
+        checkMembership(householdIdOf(device), userId);
+        return device;
+    }
+
+    /**
+     * @throws ResourceNotFoundException si la pièce n'existe pas
+     * @throws UnauthorizedAccessException si l'utilisateur n'est pas membre du foyer de la pièce
+     */
+    private Room accessibleRoom(Long roomId, Long userId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id " + roomId));
+        checkMembership(room.getHousehold().getId(), userId);
+        return room;
+    }
+
+    private Long householdIdOf(Device device) {
+        return device.getAssignedRoom().getHousehold().getId();
+    }
+
+    private HouseholdMember checkMembership(Long householdId, Long userId) {
+        return householdMemberRepository.findByHouseholdIdAndUserId(householdId, userId)
+                .orElseThrow(() -> new UnauthorizedAccessException("User is not a member of this household"));
     }
 }

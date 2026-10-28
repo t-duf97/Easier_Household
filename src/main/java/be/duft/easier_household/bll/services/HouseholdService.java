@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class HouseholdService {
 
     private final HouseholdRepository householdRepository;
@@ -41,15 +42,19 @@ public class HouseholdService {
     private final HouseholdMapper householdMapper;
     private final UserService userService;
 
-    public HouseholdResponse findById(Long id) {
+    @Transactional(readOnly = true)
+    public HouseholdResponse findById(Long id, Long userId) {
         Household household = householdRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Household not found: " + id));
+        householdMemberRepository.findByHouseholdIdAndUserId(id, userId)
+                .orElseThrow(() -> new UnauthorizedAccessException("Not a member of this house!"));
 
         Set<HouseholdMember> members = householdMemberRepository.findByHousehold(household);
         List<Room> rooms = roomRepository.findAllByHouseholdId(household.getId());
         return householdMapper.fromEntityToResponse(household, members, rooms);
     }
 
+    @Transactional(readOnly = true)
     public List<HouseholdResponse> findAllByUserId(Long userId) {
         return householdMemberRepository.findByUserId(userId)
                 .stream()

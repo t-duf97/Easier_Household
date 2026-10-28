@@ -32,9 +32,10 @@ public class RoomService {
     private final HouseholdMemberRepository householdMemberRepository;
 
     @Transactional(readOnly = true)
-    public RoomResponse findById(Long id) {
+    public RoomResponse findById(Long id, Long userId) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id" + id));
+        checkMembership(userId, room.getHousehold().getId());
         return toResponse(room);
     }
 

@@ -19,7 +19,7 @@ public class HouseholdController extends BaseController {
 
     @GetMapping("/{id}")
     public ResponseEntity<HouseholdResponse> getHousehold(@PathVariable Long id) {
-        return ResponseEntity.ok(householdService.findById(id));
+        return ResponseEntity.ok(householdService.findById(id, getCurrentUserId()));
     }
 
     @GetMapping()

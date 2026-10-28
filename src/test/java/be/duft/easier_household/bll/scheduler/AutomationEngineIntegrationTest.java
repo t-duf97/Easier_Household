@@ -3,6 +3,7 @@ package be.duft.easier_household.bll.scheduler;
 import be.duft.easier_household.TestcontainersConfiguration;
 import be.duft.easier_household.api.dtos.request.DeviceStateRequest;
 import be.duft.easier_household.bll.services.DeviceService;
+import be.duft.easier_household.dl.embeddable.HouseholdMemberId;
 import be.duft.easier_household.dl.entities.*;
 import be.duft.easier_household.dl.enums.*;
 import be.duft.easier_household.dl.repositories.*;
@@ -34,6 +35,7 @@ class AutomationEngineIntegrationTest {
     @Autowired private AutomationScheduler automationScheduler;
     @Autowired private UserRepository userRepository;
     @Autowired private HouseholdRepository householdRepository;
+    @Autowired private HouseholdMemberRepository householdMemberRepository;
     @Autowired private RoomRepository roomRepository;
     @Autowired private DeviceRepository deviceRepository;
     @Autowired private DeviceStateRepository deviceStateRepository;
@@ -63,6 +65,14 @@ class AutomationEngineIntegrationTest {
         household.setCreatedBy(user);
         household = householdRepository.save(household);
 
+        HouseholdMember member = new HouseholdMember();
+        member.setHouseholdMemberId(new HouseholdMemberId(user.getId(), household.getId()));
+        member.setUser(user);
+        member.setHousehold(household);
+        member.setRole(Role.OWNER);
+        member.setJoinedAt(LocalDateTime.now());
+        householdMemberRepository.save(member);
+
         room = new Room();
         room.setName("Salon-" + suffix);
         room.setFloor(0);
@@ -80,7 +90,7 @@ class AutomationEngineIntegrationTest {
         automation.getActions().add(setStatusAction(automation, lampB, DeviceStatus.ON, 1));
         automationRepository.save(automation);
 
-        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON));
+        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON), user.getId());
 
         assertThat(statusOf(lampB)).isEqualTo(DeviceStatus.ON);
         assertThat(deviceStateRepository.findByDeviceIdOrderByChangedAtDesc(lampB.getId(), Pageable.ofSize(1)))
@@ -115,7 +125,7 @@ class AutomationEngineIntegrationTest {
         working.getActions().add(setStatusAction(working, lampB, DeviceStatus.ON, 1));
         automationRepository.save(working);
 
-        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON));
+        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON), user.getId());
 
         assertThat(statusOf(switchA)).isEqualTo(DeviceStatus.ON);
         assertThat(statusOf(lampB)).isEqualTo(DeviceStatus.ON);
@@ -141,7 +151,7 @@ class AutomationEngineIntegrationTest {
         automation.getActions().add(setStatusAction(automation, lampB, DeviceStatus.ON, 1));
         automationRepository.save(automation);
 
-        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.OFF));
+        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.OFF), user.getId());
 
         assertThat(statusOf(lampB)).isEqualTo(DeviceStatus.OFF);
     }
@@ -160,7 +170,7 @@ class AutomationEngineIntegrationTest {
         automation.getActions().add(setStatusAction(automation, lampB, DeviceStatus.ON, 1));
         automationRepository.save(automation);
 
-        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON));
+        deviceService.changeState(switchA.getId(), stateRequest(DeviceStatus.ON), user.getId());
 
         assertThat(statusOf(lampB)).isEqualTo(DeviceStatus.ON);
     }

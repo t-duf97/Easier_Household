@@ -21,12 +21,12 @@ public class RoomController extends BaseController {
 
     @GetMapping("/rooms/{id}")
     public ResponseEntity<RoomResponse> getRoom(@PathVariable Long id) {
-        return ResponseEntity.ok(roomService.findById(id));
+        return ResponseEntity.ok(roomService.findById(id, getCurrentUserId()));
     }
 
     @PutMapping("/rooms/{id}")
     public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long id, @RequestBody RoomRequest roomRequest) {
-        Long householdId = roomService.findById(id).getHouseholdId();
+        Long householdId = roomService.findById(id, getCurrentUserId()).getHouseholdId();
 
         RoomResponse roomResponse = roomService.updateRoom(id, roomRequest, householdId, getCurrentUserId());
         return ResponseEntity.ok(roomResponse);
@@ -34,7 +34,7 @@ public class RoomController extends BaseController {
 
     @DeleteMapping("/rooms/{id}")
     public ResponseEntity<RoomResponse> deleteRoom(@PathVariable Long id) {
-        Long householdId = roomService.findById(id).getHouseholdId();
+        Long householdId = roomService.findById(id, getCurrentUserId()).getHouseholdId();
         roomService.deleteRoom(id, householdId, getCurrentUserId());
         return ResponseEntity.noContent().build();
     }

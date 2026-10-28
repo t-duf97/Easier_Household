@@ -30,12 +30,12 @@ public class DeviceController extends BaseController {
      * **/
     @GetMapping("devices/{id}")
     public ResponseEntity<DeviceResponse> getDevice(@PathVariable Long id) {
-        return ResponseEntity.ok(deviceService.findById(id));
+        return ResponseEntity.ok(deviceService.findById(id, getCurrentUserId()));
     }
 
     @GetMapping("/rooms/{roomId}/devices")
     public ResponseEntity<List<DeviceResponse>> getDevices(@PathVariable Long roomId) {
-        return ResponseEntity.ok(deviceService.findByRoomId(roomId));
+        return ResponseEntity.ok(deviceService.findByRoomId(roomId, getCurrentUserId()));
     }
 
     @PostMapping("/rooms/{roomId}/devices")
@@ -43,7 +43,7 @@ public class DeviceController extends BaseController {
             @Valid
             @RequestBody DeviceRequest request,
             @PathVariable Long roomId) {
-          DeviceResponse response = deviceService.create(request, roomId);
+          DeviceResponse response = deviceService.create(request, roomId, getCurrentUserId());
           return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -51,7 +51,7 @@ public class DeviceController extends BaseController {
     public ResponseEntity<DeviceResponse> updateDevice(
             @PathVariable Long id,
             @Valid @RequestBody DeviceRequest request) {
-        return ResponseEntity.ok(deviceService.update(id, request));
+        return ResponseEntity.ok(deviceService.update(id, request, getCurrentUserId()));
     }
 
     @DeleteMapping("/devices/{id}")
@@ -64,7 +64,7 @@ public class DeviceController extends BaseController {
     public ResponseEntity<DeviceResponse> updateDeviceState(
             @PathVariable Long id,
             @Valid @RequestBody DeviceStateRequest request){
-        return ResponseEntity.ok(deviceService.changeState(id, request));
+        return ResponseEntity.ok(deviceService.changeState(id, request, getCurrentUserId()));
     }
 
     @GetMapping("devices/{id}/history")
@@ -74,7 +74,7 @@ public class DeviceController extends BaseController {
             @Valid @RequestParam(defaultValue = "20") int pageSize
     ){
 
-        return ResponseEntity.ok(deviceService.getHistory(id, PageRequest.of(page, pageSize)));
+        return ResponseEntity.ok(deviceService.getHistory(id, PageRequest.of(page, pageSize), getCurrentUserId()));
     }
 
 

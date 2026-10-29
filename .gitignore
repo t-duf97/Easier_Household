@@ -33,3 +33,7 @@ build/
 .vscode/
 
 application.yaml
+!src/test/resources/config/application.yaml
+
+### Mosquitto ###
+docker/mosquitto/passwd

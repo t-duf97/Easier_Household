@@ -27,3 +27,11 @@ jwt:
 logging:
   level:
     be.duft.easier_household.bll.scheduler: DEBUG
+
+mqtt:
+  enabled: ${MQTT_ENABLED:false}
+  host: localhost
+  port: 1883
+  client-id: easier-household-api
+  username: ${MQTT_USERNAME}
+  password: ${MQTT_PASSWORD}

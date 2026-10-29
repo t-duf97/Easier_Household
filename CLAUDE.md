@@ -12,17 +12,19 @@ API REST de domotique. Back-end seul dans ce dépôt. Projet **perso**, pour le 
 
 **Stack réelle (lue dans `pom.xml`)**
 - Spring Boot **4.0.6**, Java **25**, Maven (wrapper `./mvnw`).
-- Dépendances : `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`, `jjwt` 0.12.6 (JWT), `springdoc-openapi` 3.0.2 (Swagger), `postgresql`, `lombok`, `devtools`.
-- **PAS de Flyway. PAS (encore) de MQTT ni de Zigbee dans le code.** MQTT/Zigbee2MQTT sont *prévus* par la tâche 6 (cf. section 4), pas implémentés : ne pas supposer qu'ils existent.
+- Dépendances : `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`, `jjwt` 0.12.6 (JWT), `springdoc-openapi` 3.0.2 (Swagger), `postgresql`, `lombok`, `devtools`, `hivemq-mqtt-client` 1.4.1 (MQTT 5).
+- **PAS de Flyway.** MQTT : seule la connexion au broker existe (`integration/mqtt`, tâche 6 étape 1) ; l'adaptateur Zigbee2MQTT (lecture, commandes) n'est **pas encore** écrit.
 - Schéma DB : `ddl-auto: update` + `src/main/resources/data.sql` (jouées à chaque démarrage via `sql.init.mode: always`). Pas de migrations versionnées.
-- Config dans `src/main/resources/application.yaml` (gitignoré, non suivi par git) : datasource Postgres `easierhouseholddb`, `server.port: 8080`, `jwt.secret`. Modèle versionné : `application.example.yaml` (secrets en `${DB_USERNAME}`, `${DB_PASSWORD}`, `${JWT_SECRET}`).
+- Config dans `src/main/resources/application.yaml` (gitignoré, non suivi par git) : datasource Postgres `easierhouseholddb`, `server.port: 8080`, `jwt.secret`, `mqtt.*` (`enabled`, `host`, `port`, `client-id`, `username`, `password`). Modèle versionné : `application.example.yaml` (secrets en `${DB_USERNAME}`, `${DB_PASSWORD}`, `${JWT_SECRET}`).
 
 **Lancer**
 ```bash
 ./mvnw spring-boot:run        # nécessite un PostgreSQL local sur 5432, base easierhouseholddb
 ./mvnw -q -DskipTests compile # compilation seule
 ./mvnw test                   # tests (Docker démarré requis : Testcontainers)
+docker compose -f docker/compose.yaml up -d   # broker Mosquitto local (127.0.0.1:1883, authentification)
 ```
+Mosquitto : `docker/mosquitto/passwd` (gitignoré) se crée avec `docker run --rm -v "$PWD/docker/mosquitto:/work" eclipse-mosquitto:2 mosquitto_passwd -b -c /work/passwd <user> <mot de passe>`, mêmes identifiants dans `mqtt.*`. Sans broker (ou avec `mqtt.enabled: false`), l'app démarre quand même. Les tests forcent `mqtt.enabled: false` (`src/test/resources/config/application.yaml`).
 `mvnw` n'a pas le bit exécutable : `sh ./mvnw …` ou `chmod +x mvnw`.
 Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourne que sous le profil `dev` (`@Profile("dev")`).
 
@@ -32,7 +34,8 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - `dl` — `entities`, `enums`, `repositories`, `converter` (ZoneIdConverter), `condition` (JpaSensorStateAdapter), `embeddable` (HouseholdMemberId)
 - `domain/condition` — **couche métier pure** (ports/adapters) : `SensorState` (record), `SensorStatePort` (port), `SensorThresholdRule` (règle, zéro Spring/JPA). Câblée dans `config/ConditionConfig`. `SensorThresholdRule.satisfies/crosses` sont aussi utilisées pour les triggers SENSOR_THRESHOLD.
 - `domain/sun` — `SunCalculator` (lever/coucher du soleil, équation NOAA, Java pur).
-- `config` — SecurityConfig, ConditionConfig (CorsConfig est commenté/désactivé)
+- `integration/mqtt` — `MqttConnection` (connexion unique au broker, reconnexion automatique, abonnements rejoués à chaque connexion, `publish` qui échoue immédiatement hors connexion : jamais de commande livrée en retard), `MqttProperties`. Les futurs adaptateurs (`integration/zigbee2mqtt`, `integration/wiz`) vivront à côté.
+- `config` — SecurityConfig, ConditionConfig, MqttConfig (bean créé seulement si `mqtt.enabled=true`) (CorsConfig est commenté/désactivé)
 
 **Entités (modèle réel)**
 - `BaseEntity` (abstraite) : `id` (IDENTITY), `createdAt`, `updatedAt` (via @PrePersist/@PreUpdate).
@@ -69,7 +72,7 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 - `SensorSimulatorScheduler` (`@Profile("dev")`) ne fait que tirer des valeurs : marche aléatoire ±0,5 °C bornée 18–25 °C (`simulator.temperature.rate`, PT5M), détection 30 % (`simulator.motion.rate`, PT1M).
 - Capteurs = **simulés**. `ChangeSource.EXTERNAL_API` n'est utilisé que par les tests : la vraie API capteurs n'aura qu'à appeler `SensorReadingService` (le port `SensorStatePort` reste le point de lecture du domaine).
 
-**Tests existants** : `api/*ApiTest` (HTTP de bout en bout via MockMvc, vraie chaîne JWT, JSON tel que le front le reçoit : `AuthApiTest`, `HouseholdApiTest`, `DeviceApiTest`, base commune `ApiIntegrationTest`). `dl/repositories/AutomationQueriesTest` (`@DataJpaTest` des requêtes JPQL custom). `SensorThresholdRuleTest` (4 cas, pur, sans Spring — bon exemple du pattern). `AutomationEngineIntegrationTest` (moteur de bout en bout), `SensorReadingIntegrationTest`, `AutomationServiceIntegrationTest`, `HouseholdDeletionIntegrationTest`, `DeviceDeletionIntegrationTest`, `RoomNameUniquenessIntegrationTest`, `AccessControlIntegrationTest` : tous sur PostgreSQL Testcontainers (config dans `TestcontainersConfiguration`). `SensorSimulatorSchedulerTest`, `CronScheduleTest`, `SunCalculatorTest` (purs). `EasierHouseholdApplicationTests` (contexte, sur la base locale). Dépendances de test dispo : `webmvc-test`, `data-jpa-test`, `spring-security-test`.
+**Tests existants** : `api/*ApiTest` (HTTP de bout en bout via MockMvc, vraie chaîne JWT, JSON tel que le front le reçoit : `AuthApiTest`, `HouseholdApiTest`, `DeviceApiTest`, base commune `ApiIntegrationTest`). `dl/repositories/AutomationQueriesTest` (`@DataJpaTest` des requêtes JPQL custom). `SensorThresholdRuleTest` (4 cas, pur, sans Spring — bon exemple du pattern). `AutomationEngineIntegrationTest` (moteur de bout en bout), `SensorReadingIntegrationTest`, `AutomationServiceIntegrationTest`, `HouseholdDeletionIntegrationTest`, `DeviceDeletionIntegrationTest`, `RoomNameUniquenessIntegrationTest`, `AccessControlIntegrationTest` : tous sur PostgreSQL Testcontainers (config dans `TestcontainersConfiguration`). `SensorSimulatorSchedulerTest`, `CronScheduleTest`, `SunCalculatorTest` (purs). `integration/mqtt/MqttConnectionTest` (Mosquitto Testcontainers avec authentification, sans Spring). `EasierHouseholdApplicationTests` (contexte, sur la base locale). Dépendances de test dispo : `webmvc-test`, `data-jpa-test`, `spring-security-test`.
 
 ---
 
@@ -141,6 +144,8 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
    - `DeviceIntegration` : `provider` (`ZIGBEE2MQTT`, `WIZ`…), `externalDeviceId` (IEEE ou IP), `extraConfig` selon le fournisseur. Idempotence : l'écho d'une commande ne doit pas créer un faux changement (statut identique = pas d'événement, déjà le cas).
    - **Se développe sans le matériel** : Mosquitto en Docker (local, et Testcontainers dans les tests) + un simulateur qui publie des messages au format Zigbee2MQTT ; faux serveur UDP pour WiZ. Le matériel ne sert qu'à la validation finale : commencer par **une seule prise** de bout en bout, puis interrupteurs, WiZ, capteurs, caméras.
    - Mosquitto avec authentification, jamais exposé hors du réseau local.
+   - **Approche validée le 2026-10-29** : état optimiste (le PATCH et les actions écrivent en base puis envoient la commande **après commit**) ; le rapport de l'appareil fait foi (`EXTERNAL_API` ; écho identique = pas d'événement, bouton physique = événement qui déclenche les automatisations). Client HiveMQ derrière nos ports. Lien par adresse IEEE, `friendly_name` résolu via `zigbee2mqtt/bridge/devices`.
+   - Étapes : 1 ✅ Mosquitto Docker + `MqttConnection` · 2 `DeviceIntegration` (enum provider, `credentialsRef` nullable, endpoint de liaison) · 3 lecture Zigbee2MQTT · 4 `DeviceCommandPort` (PATCH + moteur) · 5 faux Zigbee2MQTT (profil dédié) + disponibilité · 6 découverte `bridge/devices`, puis WiZ.
 7. **Hébergement à la maison + web app iPhone (PWA).**
    - Une machine allumée 24/7 (Raspberry Pi 5 ou mini-PC N100) héberge API, PostgreSQL, Mosquitto, Zigbee2MQTT (dongle USB : impossible via Docker Desktop sur Mac) et le front.
    - Front Angular en PWA (`ng add @angular/pwa`, `apple-touch-icon`, meta iOS), ajoutée à l'écran d'accueil depuis Safari. **HTTPS obligatoire** (sinon iOS désactive service worker et notifications).

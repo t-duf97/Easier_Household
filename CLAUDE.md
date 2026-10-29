@@ -13,7 +13,7 @@ API REST de domotique. Back-end seul dans ce dépôt. Projet **perso**, pour le 
 **Stack réelle (lue dans `pom.xml`)**
 - Spring Boot **4.0.6**, Java **25**, Maven (wrapper `./mvnw`).
 - Dépendances : `spring-boot-starter-webmvc`, `spring-boot-starter-data-jpa`, `spring-boot-starter-security`, `jjwt` 0.12.6 (JWT), `springdoc-openapi` 3.0.2 (Swagger), `postgresql`, `lombok`, `devtools`.
-- **PAS de Flyway. PAS de MQTT. PAS de Zigbee/Tuya.** Si un doc ou un souvenir le prétend, c'est faux.
+- **PAS de Flyway. PAS (encore) de MQTT ni de Zigbee dans le code.** MQTT/Zigbee2MQTT sont *prévus* par la tâche 6 (cf. section 4), pas implémentés : ne pas supposer qu'ils existent.
 - Schéma DB : `ddl-auto: update` + `src/main/resources/data.sql` (jouées à chaque démarrage via `sql.init.mode: always`). Pas de migrations versionnées.
 - Config dans `src/main/resources/application.yaml` (gitignoré, non suivi par git) : datasource Postgres `easierhouseholddb`, `server.port: 8080`, `jwt.secret`. Modèle versionné : `application.example.yaml` (secrets en `${DB_USERNAME}`, `${DB_PASSWORD}`, `${JWT_SECRET}`).
 
@@ -134,9 +134,18 @@ Swagger : `http://localhost:8080/swagger-ui`. Le simulateur de capteurs ne tourn
 3. ✅ **Rendre le simulateur de capteurs cohérent.** Valeurs numériques réalistes pour `SENSOR_TEMP` (ex. 18–25 °C écrites dans `currentValue`), simulateur de mouvement séparé pour `SENSOR_MOTION`, `ChangeSource.SCHEDULED`. Objectif : que les conditions `SENSOR_VALUE` deviennent testables de bout en bout.
 4. ➡️ **Décider le sort de `DeviceIntegration`.** Décidé le 2026-10-28 : pas de CRUD sans consommateur ; entité conservée, controller/service supprimés, conception **fusionnée dans la tâche 6**.
 5. ✅ **Tests d'intégration des endpoints.** (Fait en `@SpringBootTest` + MockMvc de bout en bout plutôt qu'en `@WebMvcTest` avec services simulés, pour tester la vraie sécurité et le vrai JSON.) Couvrir auth (register/login + accès protégé), households et devices avec `@WebMvcTest`/`spring-security-test` et un `@DataJpaTest` pour les queries custom d'`AutomationRepository`.
-6. **(Plus tard) Brancher une vraie source de capteurs.** L'archi hexagonale est déjà prête : écrire un nouvel adaptateur de `SensorStatePort` (REST polling ou webhook) à la place/à côté de `JpaSensorStateAdapter`, taguer les états ingérés `ChangeSource.EXTERNAL_API`, sécuriser par clé de service (pas le JWT user), idempotence, garde-fou anti-boucle. C'est le « lien API capteurs » — à ne faire qu'une fois 1–5 au vert.
-   - **Inclut `DeviceIntegration`** (ex-tâche 4), dans les deux sens : *lecture* (relevés réels → `SensorReadingService` avec `ChangeSource.EXTERNAL_API`) et *commande* (aujourd'hui une action `SET_DEVICE_STATUS` ne change que la base : il faudra un port `DeviceCommandPort` + un adaptateur par fournisseur, appelé par le moteur et par `PATCH /devices/{id}/state`).
-   - **Premier point de la tâche : discuter avec l'utilisateur du choix des appareils / fournisseurs** (Hue, Shelly, Tuya, Home Assistant…). Aucun n'est choisi au 2026-10-28, et la forme de `DeviceIntegration` (appairage, credentials, config) en dépend.
+6. **Brancher les vrais appareils.** Choix faits avec l'utilisateur le 2026-10-29 (usage réel, chez lui, Belgique). Inclut `DeviceIntegration` (ex-tâche 4).
+   - **Matériel (dev minimal = un standard commun, pas une intégration par marque)** : Zigbee partout où possible, via un coordinateur USB **Sonoff Zigbee 3.0 Dongle Plus** + **Zigbee2MQTT** + broker **Mosquitto**. Interrupteurs **Sonoff ZBMINI-L2/ZBMINIR2**, prises **Sonoff S26R2ZB** (type E), capteurs de température **Sonoff SNZB-02D / Aqara T1**. Ampoule existante **Philips WiZ** (Wi-Fi, API locale UDP port 38899, `setPilot`/`getPilot`) ; futures ampoules en Zigbee. Caméras plus tard, **RTSP local** obligatoire (Reolink, Tapo) ; éviter Ring/Arlo/Blink (pas d'accès local).
+   - **Adaptateur Zigbee2MQTT** : *lecture* = s'abonner à `zigbee2mqtt/<device>` (JSON : `state`, `temperature`, `occupancy`, `power`…) → `SensorReadingService` / `DeviceService` avec `ChangeSource.EXTERNAL_API` (le moteur fonctionne alors tel quel) ; *commande* = publier sur `zigbee2mqtt/<device>/set` (`{"state":"ON"}`) via un **`DeviceCommandPort`** appelé par le moteur et par `PATCH /devices/{id}/state` (aujourd'hui une action ne modifie que la base) ; disponibilité Z2M → `Device.isOnline` ; `zigbee2mqtt/bridge/devices` → proposer les appareils détectés à associer à une pièce. Identifiant stable = adresse IEEE.
+   - **Adaptateur WiZ** : commandes UDP + interrogation périodique de l'état ; IP fixe (réservation DHCP) et « communication locale » activée dans l'app WiZ.
+   - `DeviceIntegration` : `provider` (`ZIGBEE2MQTT`, `WIZ`…), `externalDeviceId` (IEEE ou IP), `extraConfig` selon le fournisseur. Idempotence : l'écho d'une commande ne doit pas créer un faux changement (statut identique = pas d'événement, déjà le cas).
+   - **Se développe sans le matériel** : Mosquitto en Docker (local, et Testcontainers dans les tests) + un simulateur qui publie des messages au format Zigbee2MQTT ; faux serveur UDP pour WiZ. Le matériel ne sert qu'à la validation finale : commencer par **une seule prise** de bout en bout, puis interrupteurs, WiZ, capteurs, caméras.
+   - Mosquitto avec authentification, jamais exposé hors du réseau local.
+7. **Hébergement à la maison + web app iPhone (PWA).**
+   - Une machine allumée 24/7 (Raspberry Pi 5 ou mini-PC N100) héberge API, PostgreSQL, Mosquitto, Zigbee2MQTT (dongle USB : impossible via Docker Desktop sur Mac) et le front.
+   - Front Angular en PWA (`ng add @angular/pwa`, `apple-touch-icon`, meta iOS), ajoutée à l'écran d'accueil depuis Safari. **HTTPS obligatoire** (sinon iOS désactive service worker et notifications).
+   - Accès distant via **Tailscale** (VPN privé + certificats HTTPS), rien d'exposé sur Internet. Front et API derrière un même reverse proxy (ex. Caddy) : plus de CORS (aujourd'hui limité à `localhost`).
+   - Les notifications push en PWA (iOS ≥ 16.4) servent l'évolution « Notifications » de la section 6.
 
 ---
 
